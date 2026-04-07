@@ -8,15 +8,12 @@ public class Main {
     public static void main(String[] args) {
         System.out.println("--- BIENVENIDO AL CAMPEONATO POKÉMON ---");
 
-        // 1. Registro de Trainers
         Trainer player1 = createTrainer(1);
         Trainer player2 = createTrainer(2);
 
-        // 2. Selección de equipo (Draft)
         System.out.println("\n--- FASE DE SELECCIÓN DE POKÉMON ---");
         startDraft(player1, player2);
 
-        // 3. Ejecución del combate
         System.out.println("\n¡QUE COMIENCE EL DUELO!");
         runBattle(player1, player2);
     }
@@ -42,7 +39,7 @@ public class Main {
         System.out.println("1. Blastoise (Agua)\n2. Charizard (Fuego)\n3. Venusaur (Planta)");
         
         int choice = scanner.nextInt();
-        scanner.nextLine(); // Limpiar el buffer del scanner
+        scanner.nextLine();
 
         switch (choice) {
             case 1:
@@ -70,15 +67,12 @@ public class Main {
     }
 
     private static void runBattle(Trainer p1, Trainer p2) {
-        // Seleccionamos el primer Pokémon de cada uno para simplificar este primer test
         Pokemon activeP1 = p1.getTeam().get(0);
         Pokemon activeP2 = p2.getTeam().get(0);
 
         while (activeP1.getHp() > 0 && activeP2.getHp() > 0) {
             System.out.println("\n" + activeP1.getName() + " (" + activeP1.getHp() + " HP) VS " 
                                + activeP2.getName() + " (" + activeP2.getHp() + " HP)");
-
-            // El más rápido ataca primero
             if (activeP1.getSpeed() >= activeP2.getSpeed()) {
                 executeTurn(activeP1, activeP2);
                 if (activeP2.getHp() > 0) executeTurn(activeP2, activeP1);
@@ -102,7 +96,6 @@ private static void executeTurn(Pokemon attacker, Pokemon defender) {
     int moveChoice = scanner.nextInt();
     Attack selectedAttack = attacker.getAttacks().get(moveChoice - 1);
     
-    // Mensaje de ataque personalizado
     System.out.println("¡El " + attacker.getName() + " de " + attacker.getOwnerName() + " usa " + selectedAttack.getName() + "!");
     defender.receiveDamage(selectedAttack, attacker);
 }

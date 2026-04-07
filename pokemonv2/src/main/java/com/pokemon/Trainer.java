@@ -24,14 +24,12 @@ public void addToTeam(Pokemon pokemon) {
 }
 
     public boolean hasAvailablePokemon() {
-        // Verifica si algún Pokémon del equipo sigue con vida
         for (Pokemon p : team) {
             if (p.getHp() > 0) return true;
         }
         return false;
     }
 
-    // Getters
     public String getName() { return name; }
     public String getGender() { return gender; }
     public List<Pokemon> getTeam() { return team; }

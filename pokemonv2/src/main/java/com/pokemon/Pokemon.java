@@ -4,13 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Pokemon {
-    // Atributos finales (no cambian después de crearse)
     private final String name;
     private final String type;
     private final int speed;
     private final List<Attack> attacks;
     
-    // Atributos variables
     private int hp;
     private String ownerName; // Nombre del entrenador que posee este Pokémon
 
@@ -22,7 +20,6 @@ public class Pokemon {
         this.attacks = new ArrayList<>();
     }
 
-    // Método para asignar el dueño (se llamará desde la clase Trainer)
     public void setOwnerName(String ownerName) {
         this.ownerName = ownerName;
     }
@@ -34,7 +31,6 @@ public class Pokemon {
     }
 
     public void receiveDamage(Attack enemyAttack, Pokemon attacker) {
-        // Obtenemos el multiplicador de la nueva clase centralizada
         double multiplier = TypeChart.getMultiplier(enemyAttack.getType(), this.type);
 
         if (multiplier > 1.0) {
@@ -47,12 +43,10 @@ public class Pokemon {
         this.hp -= finalDamage;
         if (this.hp < 0) this.hp = 0;
 
-        // Mensaje personalizado indicando de quién es el Pokémon que sufre el daño
         System.out.println("El " + this.name + " de " + this.ownerName + 
                            " ha recibido " + finalDamage + " de daño. (HP restante: " + this.hp + ")");
     }
 
-    // Getters
     public String getName() { return name; }
     public int getHp() { return hp; }
     public int getSpeed() { return speed; }
