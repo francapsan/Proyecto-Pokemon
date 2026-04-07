@@ -1,0 +1,30 @@
+# Nombre del workflow que aparecerá en la pestaña "Actions" de GitHub
+name: Java CI with Maven
+
+# Define los eventos que dispararán este workflow.
+# En este caso, se ejecutará cada vez que hagas 'push' a cualquier rama
+# o cuando se cree un 'pull request'.
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+# Define los trabajos (jobs) que se ejecutarán.
+jobs:
+  build:
+    # El tipo de máquina virtual en la que se ejecutará el trabajo
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. Clona tu repositorio en la máquina virtual
+      - uses: actions/checkout@v3
+      # 2. Configura el entorno de Java (JDK)
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+      # 3. Ejecuta los tests usando Maven. El comando 'mvn test' compila y corre las pruebas.
+      - name: Build and test with Maven
+        run: mvn -B test --file pom.xml

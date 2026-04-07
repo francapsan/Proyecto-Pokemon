@@ -34,30 +34,22 @@ public class Pokemon {
     }
 
     public void receiveDamage(Attack enemyAttack, Pokemon attacker) {
-        int finalDamage = enemyAttack.getDamage();
+        // Obtenemos el multiplicador de la nueva clase centralizada
+        double multiplier = TypeChart.getMultiplier(enemyAttack.getType(), this.type);
 
-        // Lógica de ventaja de tipo: Solo si el ataque usado es el "insignia" (el primero)
-        // y el tipo del ataque gana al tipo del defensor.
-        if (enemyAttack.getName().equals(attacker.getAttacks().get(0).getName())) {
-            if (hasTypeAdvantage(enemyAttack.getType(), this.type)) {
-                finalDamage *= 2;
-                System.out.println("¡ES SÚPER EFECTIVO!");
-            }
+        if (multiplier > 1.0) {
+            System.out.println("¡ES SÚPER EFECTIVO!");
+        } else if (multiplier < 1.0) {
+            System.out.println("No es muy efectivo...");
         }
 
+        int finalDamage = (int) (enemyAttack.getDamage() * multiplier);
         this.hp -= finalDamage;
         if (this.hp < 0) this.hp = 0;
 
         // Mensaje personalizado indicando de quién es el Pokémon que sufre el daño
         System.out.println("El " + this.name + " de " + this.ownerName + 
                            " ha recibido " + finalDamage + " de daño. (HP restante: " + this.hp + ")");
-    }
-
-    // Lógica privada para comprobar debilidades elementales
-    private boolean hasTypeAdvantage(String attackerType, String defenderType) {
-        return (attackerType.equals("AGUA") && defenderType.equals("FUEGO")) ||
-               (attackerType.equals("FUEGO") && defenderType.equals("PLANTA")) ||
-               (attackerType.equals("PLANTA") && defenderType.equals("AGUA"));
     }
 
     // Getters
