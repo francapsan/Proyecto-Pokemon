@@ -1,5 +1,8 @@
 package com.pokemon;
 
+import java.util.ArrayList;
+import java.util.InputMismatchException;
+import java.util.List;
 import java.util.Scanner;
 
 public class Main {
@@ -14,7 +17,6 @@ public class Main {
         System.out.println("\n--- FASE DE SELECCIÓN DE POKÉMON ---");
         startDraft(player1, player2);
 
-        System.out.println("\n¡QUE COMIENCE EL DUELO!");
         runBattle(player1, player2);
     }
 
@@ -67,27 +69,124 @@ public class Main {
     }
 
     private static void runBattle(Trainer p1, Trainer p2) {
-        Pokemon activeP1 = p1.getTeam().get(0);
-        Pokemon activeP2 = p2.getTeam().get(0);
+        System.out.println("\n¡QUE COMIENCE EL DUELO!");
 
-        while (activeP1.getHp() > 0 && activeP2.getHp() > 0) {
-            System.out.println("\n" + activeP1.getName() + " (" + activeP1.getHp() + " HP) VS " 
-                               + activeP2.getName() + " (" + activeP2.getHp() + " HP)");
+        Pokemon activeP1 = chooseNextPokemon(p1);
+        Pokemon activeP2 = chooseNextPokemon(p2);
+
+        while (p1.hasAvailablePokemon() && p2.hasAvailablePokemon()) {
+            System.out.println("\n" + "--- NUEVO TURNO ---");
+            System.out.println(p1.getName() + ": " + activeP1.getName() + " (" + activeP1.getHp() + " HP)");
+            System.out.println(p2.getName() + ": " + activeP2.getName() + " (" + activeP2.getHp() + " HP)");
+
+            Pokemon first, second;
+            Trainer firstTrainer, secondTrainer;
+
             if (activeP1.getSpeed() >= activeP2.getSpeed()) {
-                executeTurn(activeP1, activeP2);
-                if (activeP2.getHp() > 0) executeTurn(activeP2, activeP1);
+                first = activeP1;
+                firstTrainer = p1;
+                second = activeP2;
+                secondTrainer = p2;
             } else {
-                executeTurn(activeP2, activeP1);
-                if (activeP1.getHp() > 0) executeTurn(activeP1, activeP2);
+                first = activeP2;
+                firstTrainer = p2;
+                second = activeP1;
+                secondTrainer = p1;
+            }
+
+            // Turno del primer atacante
+            executeTurn(first, second);
+
+            // Comprobar si el defensor fue derrotado
+            if (second.getHp() <= 0) {
+                System.out.println("\n¡" + second.getName() + " de " + second.getOwnerName() + " ha sido derrotado!");
+                if (secondTrainer.hasAvailablePokemon()) {
+                    Pokemon newPokemon = chooseNextPokemon(secondTrainer);
+                    if (secondTrainer == p1) {
+                        activeP1 = newPokemon;
+                    } else {
+                        activeP2 = newPokemon;
+                    }
+                    continue; // Reinicia el bucle para el nuevo enfrentamiento
+                } else {
+                    break; // El entrenador no tiene más Pokémon, termina la batalla
+                }
+            }
+
+            // Turno del segundo atacante
+            executeTurn(second, first);
+
+            // Comprobar si el primer atacante fue derrotado
+            if (first.getHp() <= 0) {
+                System.out.println("\n¡" + first.getName() + " de " + first.getOwnerName() + " ha sido derrotado!");
+                if (firstTrainer.hasAvailablePokemon()) {
+                    Pokemon newPokemon = chooseNextPokemon(firstTrainer);
+                    if (firstTrainer == p1) {
+                        activeP1 = newPokemon;
+                    } else {
+                        activeP2 = newPokemon;
+                    }
+                    continue; // Reinicia el bucle para el nuevo enfrentamiento
+                } else {
+                    break; // El entrenador no tiene más Pokémon, termina la batalla
+                }
             }
         }
 
         System.out.println("\n--- FIN DEL COMBATE ---");
-        String winner = (activeP1.getHp() > 0) ? activeP1.getName() : activeP2.getName();
-        System.out.println("¡El ganador es " + winner + "!");
+        if (!p1.hasAvailablePokemon()) {
+            System.out.println("¡" + p1.getName() + " no tiene más Pokémon disponibles!");
+            System.out.println("¡El ganador del campeonato es " + p2.getName() + "!");
+        } else {
+            System.out.println("¡" + p2.getName() + " no tiene más Pokémon disponibles!");
+            System.out.println("¡El ganador del campeonato es " + p1.getName() + "!");
+        }
     }
 
-private static void executeTurn(Pokemon attacker, Pokemon defender) {
+    private static Pokemon chooseNextPokemon(Trainer trainer) {
+        System.out.println("\n" + trainer.getName() + ", elige tu Pokémon:");
+        
+        List<Pokemon> availablePokemon = new ArrayList<>();
+        for (Pokemon p : trainer.getTeam()) {
+            if (p.getHp() > 0) {
+                availablePokemon.add(p);
+            }
+        }
+
+        if (availablePokemon.size() == 1) {
+            Pokemon onlyChoice = availablePokemon.get(0);
+            System.out.println("¡Solo te queda " + onlyChoice.getName() + "! ¡Adelante, " + onlyChoice.getName() + "!");
+            return onlyChoice;
+        }
+
+        for (int i = 0; i < availablePokemon.size(); i++) {
+            Pokemon p = availablePokemon.get(i);
+            System.out.println((i + 1) + ". " + p.getName() + " (" + p.getHp() + " HP)");
+        }
+
+        int choice = 0;
+        Pokemon chosenPokemon = null;
+        while (chosenPokemon == null) {
+            System.out.print("Elige un Pokémon (1-" + availablePokemon.size() + "): ");
+            try {
+                choice = scanner.nextInt();
+                scanner.nextLine(); // Consume newline
+                if (choice >= 1 && choice <= availablePokemon.size()) {
+                    chosenPokemon = availablePokemon.get(choice - 1);
+                } else {
+                    System.out.println("Opción no válida. Inténtalo de nuevo.");
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("Entrada no válida. Por favor, introduce un número.");
+                scanner.nextLine(); // Consume the invalid input
+            }
+        }
+        
+        System.out.println("¡Adelante, " + chosenPokemon.getName() + "!");
+        return chosenPokemon;
+    }
+
+    private static void executeTurn(Pokemon attacker, Pokemon defender) {
     System.out.println("\nTurno del " + attacker.getName() + " de " + attacker.getOwnerName() + ". Elige ataque (1-3):");
     for (int i = 0; i < 3; i++) {
         System.out.println((i + 1) + ". " + attacker.getAttacks().get(i).getName());
