@@ -7,11 +7,11 @@ public class AppTest {
 
     @Test
     public void testSuperEffectiveDamage() {
-        Pokemon attacker = new Pokemon("Blastoise", "AGUA", 100, 78);
-        Attack waterAttack = new Attack("Hidrobomba", 40, "AGUA");
+        Pokemon attacker = new Pokemon("Blastoise", PokemonType.AGUA, 100, 78);
+        Attack waterAttack = new Attack("Hidrobomba", 40, PokemonType.AGUA);
         attacker.learnAttack(waterAttack);
 
-        Pokemon defender = new Pokemon("Charizard", "FUEGO", 100, 100);
+        Pokemon defender = new Pokemon("Charizard", PokemonType.FUEGO, 100, 100);
         int initialHp = defender.getHp();
 
         defender.receiveDamage(waterAttack, attacker);
@@ -24,11 +24,11 @@ public class AppTest {
 
     @Test
     public void testNormalDamage() {
-        Pokemon attacker = new Pokemon("Charizard", "FUEGO", 100, 100);
-        Attack fireAttack = new Attack("Lanzallamas", 40, "FUEGO");
+        Pokemon attacker = new Pokemon("Charizard", PokemonType.FUEGO, 100, 100);
+        Attack fireAttack = new Attack("Lanzallamas", 40, PokemonType.FUEGO);
         attacker.learnAttack(fireAttack);
 
-        Pokemon defender = new Pokemon("Otro Charizard", "FUEGO", 100, 100);
+        Pokemon defender = new Pokemon("Otro Charizard", PokemonType.FUEGO, 100, 100);
         int initialHp = defender.getHp();
 
         defender.receiveDamage(fireAttack, attacker);
@@ -39,11 +39,11 @@ public class AppTest {
 
     @Test
     public void testNotVeryEffectiveDamage() {
-        Pokemon attacker = new Pokemon("Charizard", "FUEGO", 100, 100);
-        Attack fireAttack = new Attack("Lanzallamas", 40, "FUEGO");
+        Pokemon attacker = new Pokemon("Charizard", PokemonType.FUEGO, 100, 100);
+        Attack fireAttack = new Attack("Lanzallamas", 40, PokemonType.FUEGO);
         attacker.learnAttack(fireAttack);
 
-        Pokemon defender = new Pokemon("Blastoise", "AGUA", 100, 78);
+        Pokemon defender = new Pokemon("Blastoise", PokemonType.AGUA, 100, 78);
         int initialHp = defender.getHp();
 
         defender.receiveDamage(fireAttack, attacker);
@@ -53,8 +53,8 @@ public class AppTest {
     }
     @Test
     public void testTypeChartLogic() {
-        assertEquals(2.0, TypeChart.getMultiplier("AGUA", "FUEGO"), 0.001);
-        assertEquals(0.5, TypeChart.getMultiplier("PLANTA", "FUEGO"), 0.001);
-        assertEquals(1.0, TypeChart.getMultiplier("FUEGO", "FUEGO"), 0.001);
+        assertEquals(2.0, TypeChart.getMultiplier(PokemonType.AGUA, PokemonType.FUEGO), 0.001);
+        assertEquals(0.5, TypeChart.getMultiplier(PokemonType.PLANTA, PokemonType.FUEGO), 0.001);
+        assertEquals(1.0, TypeChart.getMultiplier(PokemonType.FUEGO, PokemonType.FUEGO), 0.001);
     }
 }

@@ -1,12 +1,16 @@
 package com.pokemon;
 
-import java.util.ArrayList;
 import java.util.InputMismatchException;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public class Main {
     private static Scanner scanner = new Scanner(System.in);
+    private static final Map<Integer, Supplier<Pokemon>> POKEMON_CREATORS = new LinkedHashMap<>();
 
     public static void main(String[] args) {
         System.out.println("--- BIENVENIDO AL CAMPEONATO POKÉMON ---");
@@ -20,6 +24,30 @@ public class Main {
         runBattle(player1, player2);
     }
 
+    static {
+        POKEMON_CREATORS.put(1, () -> {
+            Pokemon p = new Pokemon("Blastoise", PokemonType.AGUA, 100, 78);
+            p.learnAttack(new Attack("Hidrobomba", 40, PokemonType.AGUA));
+            p.learnAttack(new Attack("Mordisco", 20, PokemonType.NORMAL));
+            p.learnAttack(new Attack("Puño Certero", 25, PokemonType.NORMAL));
+            return p;
+        });
+        POKEMON_CREATORS.put(2, () -> {
+            Pokemon p = new Pokemon("Charizard", PokemonType.FUEGO, 100, 100);
+            p.learnAttack(new Attack("Lanzallamas", 40, PokemonType.FUEGO));
+            p.learnAttack(new Attack("Cola Dragon", 20, PokemonType.NORMAL));
+            p.learnAttack(new Attack("Vuelo", 25, PokemonType.NORMAL));
+            return p;
+        });
+        POKEMON_CREATORS.put(3, () -> {
+            Pokemon p = new Pokemon("Venusaur", PokemonType.PLANTA, 100, 80);
+            p.learnAttack(new Attack("Rayo Solar", 40, PokemonType.PLANTA));
+            p.learnAttack(new Attack("Hoja Afilada", 20, PokemonType.NORMAL));
+            p.learnAttack(new Attack("Terremoto", 25, PokemonType.NORMAL));
+            return p;
+        });
+    }
+
     private static Trainer createTrainer(int playerNumber) {
         System.out.print("\nJugador " + playerNumber + ", introduce tu nombre: ");
         String name = scanner.nextLine();
@@ -29,7 +57,7 @@ public class Main {
     }
 
     private static void startDraft(Trainer p1, Trainer p2) {
-        for (int i = 1; i <= 3; i++) {
+        for (int i = 1; i <= Trainer.MAX_TEAM_SIZE; i++) {
             System.out.println("\nTurno de selección nº " + i);
             p1.addToTeam(pickPokemon(p1.getName()));
             p2.addToTeam(pickPokemon(p2.getName()));
@@ -38,33 +66,26 @@ public class Main {
 
     private static Pokemon pickPokemon(String trainerName) {
         System.out.println(trainerName + ", elige a un compañero:");
-        System.out.println("1. Blastoise (Agua)\n2. Charizard (Fuego)\n3. Venusaur (Planta)");
-        
-        int choice = scanner.nextInt();
-        scanner.nextLine();
+        POKEMON_CREATORS.forEach((key, creator) -> {
+            Pokemon p = creator.get();
+            System.out.printf("%d. %s (%s)\n", key, p.getName(), p.getType().name());
+        });
 
-        switch (choice) {
-            case 1:
-                Pokemon blastoise = new Pokemon("Blastoise", "AGUA", 100, 78);
-                blastoise.learnAttack(new Attack("Hidrobomba", 40, "AGUA"));
-                blastoise.learnAttack(new Attack("Mordisco", 20, "NORMAL"));
-                blastoise.learnAttack(new Attack("Puño Certero", 25, "NORMAL"));
-                return blastoise;
-            case 2:
-                Pokemon charizard = new Pokemon("Charizard", "FUEGO", 100, 100);
-                charizard.learnAttack(new Attack("Lanzallamas", 40, "FUEGO"));
-                charizard.learnAttack(new Attack("Cola Dragon", 20, "NORMAL"));
-                charizard.learnAttack(new Attack("Vuelo", 25, "NORMAL"));
-                return charizard;
-            case 3:
-                Pokemon venusaur = new Pokemon("Venusaur", "PLANTA", 100, 80);
-                venusaur.learnAttack(new Attack("Rayo Solar", 40, "PLANTA"));
-                venusaur.learnAttack(new Attack("Hoja Afilada", 20, "NORMAL"));
-                venusaur.learnAttack(new Attack("Terremoto", 25, "NORMAL"));
-                return venusaur;
-            default:
-                System.out.println("Opción no válida. Por defecto eliges a Blastoise.");
-                return new Pokemon("Blastoise", "AGUA", 100, 78);
+        while (true) {
+            System.out.print("Elige un Pokémon (1-" + POKEMON_CREATORS.size() + "): ");
+            try {
+                int choice = scanner.nextInt();
+                scanner.nextLine(); // Consume newline
+
+                if (POKEMON_CREATORS.containsKey(choice)) {
+                    return POKEMON_CREATORS.get(choice).get();
+                } else {
+                    System.out.println("Opción no válida. Por favor, elige un número entre 1 y " + POKEMON_CREATORS.size() + ".");
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("Entrada no válida. Por favor, introduce un número.");
+                scanner.nextLine(); // Consume the invalid input
+            }
         }
     }
 
@@ -100,17 +121,11 @@ public class Main {
             // Comprobar si el defensor fue derrotado
             if (second.getHp() <= 0) {
                 System.out.println("\n¡" + second.getName() + " de " + second.getOwnerName() + " ha sido derrotado!");
-                if (secondTrainer.hasAvailablePokemon()) {
-                    Pokemon newPokemon = chooseNextPokemon(secondTrainer);
-                    if (secondTrainer == p1) {
-                        activeP1 = newPokemon;
-                    } else {
-                        activeP2 = newPokemon;
-                    }
-                    continue; // Reinicia el bucle para el nuevo enfrentamiento
-                } else {
-                    break; // El entrenador no tiene más Pokémon, termina la batalla
-                }
+                if (!secondTrainer.hasAvailablePokemon()) break;
+                
+                Pokemon newPokemon = chooseNextPokemon(secondTrainer);
+                if (secondTrainer == p1) activeP1 = newPokemon; else activeP2 = newPokemon;
+                continue; // Reinicia el bucle para el nuevo enfrentamiento
             }
 
             // Turno del segundo atacante
@@ -119,17 +134,11 @@ public class Main {
             // Comprobar si el primer atacante fue derrotado
             if (first.getHp() <= 0) {
                 System.out.println("\n¡" + first.getName() + " de " + first.getOwnerName() + " ha sido derrotado!");
-                if (firstTrainer.hasAvailablePokemon()) {
-                    Pokemon newPokemon = chooseNextPokemon(firstTrainer);
-                    if (firstTrainer == p1) {
-                        activeP1 = newPokemon;
-                    } else {
-                        activeP2 = newPokemon;
-                    }
-                    continue; // Reinicia el bucle para el nuevo enfrentamiento
-                } else {
-                    break; // El entrenador no tiene más Pokémon, termina la batalla
-                }
+                if (!firstTrainer.hasAvailablePokemon()) break;
+
+                Pokemon newPokemon = chooseNextPokemon(firstTrainer);
+                if (firstTrainer == p1) activeP1 = newPokemon; else activeP2 = newPokemon;
+                // No es necesario un 'continue' aquí, el bucle se reiniciará de forma natural
             }
         }
 
@@ -146,12 +155,9 @@ public class Main {
     private static Pokemon chooseNextPokemon(Trainer trainer) {
         System.out.println("\n" + trainer.getName() + ", elige tu Pokémon:");
         
-        List<Pokemon> availablePokemon = new ArrayList<>();
-        for (Pokemon p : trainer.getTeam()) {
-            if (p.getHp() > 0) {
-                availablePokemon.add(p);
-            }
-        }
+        List<Pokemon> availablePokemon = trainer.getTeam().stream()
+                                                .filter(p -> p.getHp() > 0)
+                                                .collect(Collectors.toList());
 
         if (availablePokemon.size() == 1) {
             Pokemon onlyChoice = availablePokemon.get(0);
@@ -187,15 +193,30 @@ public class Main {
     }
 
     private static void executeTurn(Pokemon attacker, Pokemon defender) {
-    System.out.println("\nTurno del " + attacker.getName() + " de " + attacker.getOwnerName() + ". Elige ataque (1-3):");
-    for (int i = 0; i < 3; i++) {
-        System.out.println((i + 1) + ". " + attacker.getAttacks().get(i).getName());
-    }
+        System.out.println("\nTurno del " + attacker.getName() + " de " + attacker.getOwnerName() + ". Elige un ataque:");
+        for (int i = 0; i < attacker.getAttacks().size(); i++) {
+            System.out.println((i + 1) + ". " + attacker.getAttacks().get(i).getName());
+        }
 
-    int moveChoice = scanner.nextInt();
-    Attack selectedAttack = attacker.getAttacks().get(moveChoice - 1);
-    
-    System.out.println("¡El " + attacker.getName() + " de " + attacker.getOwnerName() + " usa " + selectedAttack.getName() + "!");
-    defender.receiveDamage(selectedAttack, attacker);
-}
+        Attack selectedAttack = null;
+        while (selectedAttack == null) {
+            System.out.print("Elige un ataque (1-" + attacker.getAttacks().size() + "): ");
+            try {
+                int moveChoice = scanner.nextInt();
+                scanner.nextLine(); // Consume newline
+
+                if (moveChoice >= 1 && moveChoice <= attacker.getAttacks().size()) {
+                    selectedAttack = attacker.getAttacks().get(moveChoice - 1);
+                } else {
+                    System.out.println("Opción no válida. Inténtalo de nuevo.");
+                }
+            } catch (InputMismatchException e) {
+                System.out.println("Entrada no válida. Por favor, introduce un número.");
+                scanner.nextLine(); // Consume the invalid input
+            }
+        }
+
+        System.out.println("¡El " + attacker.getName() + " de " + attacker.getOwnerName() + " usa " + selectedAttack.getName() + "!");
+        defender.receiveDamage(selectedAttack, attacker);
+    }
 }

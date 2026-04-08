@@ -1,9 +1,14 @@
 # PowerShell script to generate and merge EvoSuite tests for changed classes
 
-# Get changed Java files from git since last commit
-$changedFiles = git diff HEAD --name-only src/main/java/com/pokemon/*.java
+# Get changed Java files from git since last commit, including untracked files
+$changedFiles = git diff --diff-filter=ACMRT HEAD --name-only -- src/main/java/com/pokemon
+$untrackedFiles = git ls-files --others --exclude-standard -- src/main/java/com/pokemon
+$allFiles = @()
+if ($changedFiles) { $allFiles += $changedFiles }
+if ($untrackedFiles) { $allFiles += $untrackedFiles }
+$changedFiles = $allFiles | Where-Object { $_ -like '*.java' } | Select-Object -Unique
 
-if ($changedFiles) {
+if ($changedFiles.Count -gt 0) {
     foreach ($file in $changedFiles) {
         # Extract class name from path
         $className = [System.IO.Path]::GetFileNameWithoutExtension($file)
@@ -54,5 +59,5 @@ if ($changedFiles) {
         Remove-Item "evosuite-tests" -Recurse -Force
     }
 } else {
-    Write-Host "No changes detected in source files."
+    Write-Host "No changed or new Java files detected."
 }

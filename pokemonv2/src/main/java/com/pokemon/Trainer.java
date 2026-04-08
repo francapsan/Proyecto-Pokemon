@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Trainer {
+    public static final int MAX_TEAM_SIZE = 3;
+
     private String name;
     private String gender;
     private List<Pokemon> team;
@@ -15,7 +17,7 @@ public class Trainer {
     }
 
 public void addToTeam(Pokemon pokemon) {
-    if (this.team.size() < 3) {
+    if (this.team.size() < MAX_TEAM_SIZE) {
         pokemon.setOwnerName(this.name);
         this.team.add(pokemon);
     } else {

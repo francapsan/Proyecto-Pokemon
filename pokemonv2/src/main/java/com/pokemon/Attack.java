@@ -3,9 +3,9 @@ package com.pokemon;
 public class Attack {
     private String name;
     private int damage;
-    private String type;
+    private PokemonType type;
 
-    public Attack(String name, int damage, String type) {
+    public Attack(String name, int damage, PokemonType type) {
         this.name = name;
         this.damage = damage;
         this.type = type;
@@ -13,5 +13,5 @@ public class Attack {
 
     public String getName() { return name; }
     public int getDamage() { return damage; }
-    public String getType() { return type; }
+    public PokemonType getType() { return type; }
 }

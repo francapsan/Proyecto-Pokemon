@@ -4,15 +4,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Pokemon {
+    private static final int MAX_ATTACKS = 3;
     private final String name;
-    private final String type;
+    private final PokemonType type;
     private final int speed;
     private final List<Attack> attacks;
     
     private int hp;
     private String ownerName; // Nombre del entrenador que posee este Pokémon
 
-    public Pokemon(String name, String type, int hp, int speed) {
+    public Pokemon(String name, PokemonType type, int hp, int speed) {
         this.name = name;
         this.type = type;
         this.hp = hp;
@@ -25,7 +26,7 @@ public class Pokemon {
     }
 
     public void learnAttack(Attack attack) {
-        if (this.attacks.size() < 3) {
+        if (this.attacks.size() < MAX_ATTACKS) {
             this.attacks.add(attack);
         }
     }
@@ -52,5 +53,5 @@ public class Pokemon {
     public int getSpeed() { return speed; }
     public List<Attack> getAttacks() { return attacks; }
     public String getOwnerName() { return ownerName; }
-    public String getType() { return type; }
+    public PokemonType getType() { return type; }
 }
