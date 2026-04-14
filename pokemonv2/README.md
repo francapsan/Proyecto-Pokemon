@@ -1,42 +1,69 @@
-# Pokemon Project Test Generation
+# Campeonato Pokémon - Simulador de Batallas en Consola
 
-This project includes an automated system for generating JUnit tests using EvoSuite Maven plugin.
+Este proyecto es un simulador de batallas Pokémon por turnos desarrollado en Java, que se ejecuta en la consola. Dos jugadores pueden crear sus entrenadores, seleccionar un equipo de tres Pokémon en una fase de 'draft' y luego enfrentarse en un combate estratégico hasta que uno de los dos se quede sin Pokémon capaces de luchar.
+---
 
-## Setup
+## 🚀 Características
 
-No additional downloads required. EvoSuite is handled via Maven.
+- **Creación de Entrenadores**: Personaliza a los dos jugadores con su propio nombre y género.
+- **Fase de Selección (Draft)**: Cada jugador elige por turnos un equipo de 3 Pokémon.
+- **Selección Única por Entrenador**: Un jugador no puede elegir el mismo Pokémon dos veces, pero el oponente sí puede seleccionarlo.
+- **Sistema de Combate por Turnos**: El orden de ataque en cada ronda se decide por el atributo de velocidad de los Pokémon.
+- **Tabla de Tipos**: Implementada la lógica de efectividad elemental (Agua, Fuego, Planta) que modifica el daño:
+  - `Súper efectivo` (x2 de daño)
+  - `No es muy efectivo` (x0.5 de daño)
+- **Gestión de Equipo**: Si un Pokémon es derrotado, el entrenador debe elegir otro de su equipo para continuar la batalla.
+- **Condición de Victoria**: El combate termina cuando un entrenador se queda sin Pokémon sanos, declarando al otro como ganador.
 
-## How it works
+---
 
-- The system detects changes to Java files in `src/main/java/com/pokemon/` using `git diff`.
-- For each changed class, it generates tests using EvoSuite Maven plugin.
-- The generated test methods are extracted and appended to `AppTest.java`.
+## 🛠️ Tecnologías Utilizadas
 
-## Automation
+- **Lenguaje**: Java 
+- **Gestión de Proyecto**: Apache Maven
+- **Testing (Entorno de desarrollo)**:
+  - EvoSuite (Generación automática de tests)
+  - PowerShell (Scripts para automatizar el flujo de trabajo de testing)
 
-- **Pre-commit hook**: Runs automatically on `git commit` via `.git/hooks/pre-commit`.
-- **Maven profile**: Run manually with `mvn clean compile -Pgenerate-tests`.
+---
 
-## Running Tests
+## 📋 Prerrequisitos
 
-```bash
-mvn test
-```
+Asegúrate de tener instalado lo siguiente en tu sistema:
 
-## Manual Generation
+- **Java Development Kit (JDK)** - Versión 11 o superior.
+- **Apache Maven** - Para compilar y ejecutar el proyecto.
 
-To generate tests manually for a specific class:
+---
 
-```bash
-mvn evosuite:generate -DtargetClass=com.pokemon.Pokemon
-```
+## ⚙️ Instalación y Ejecución
 
-Then run the PowerShell script:
+1.  **Clona el repositorio:**
+    ```sh
+    git clone <URL_DEL_REPOSITORIO>
+    ```
 
-```powershell
-.\merge-tests.ps1
-```
+2.  **Navega al directorio del proyecto:**
+    ```sh
+    cd pokemonv2
+    ```
 
-## Incremental Updates
+3.  **Compila el proyecto usando Maven:**
+    ```sh
+    mvn compile
+    ```
 
-The system only generates tests for modified classes, ensuring incremental updates without regenerating all tests.
+4.  **Ejecuta la aplicación:**
+    ```sh
+    mvn exec:java -Dexec.mainClass="com.pokemon.Main"
+    ```
+
+---
+
+## 🎮 Cómo Jugar
+
+1.  Al iniciar la aplicación, sigue las instrucciones para introducir el **nombre** y **género** de ambos jugadores.
+2.  En la **fase de selección**, elige por turnos los Pokémon para tu equipo introduciendo el número correspondiente.
+3.  Una vez que ambos equipos estén listos, ¡comienza la batalla!
+4.  En tu turno, elige un ataque de la lista para que tu Pokémon lo use.
+5.  La batalla continúa hasta que un jugador se quede sin Pokémon. ¡Que gane el mejor entrenador!

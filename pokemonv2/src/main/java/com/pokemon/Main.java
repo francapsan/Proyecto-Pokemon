@@ -6,6 +6,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -69,21 +70,38 @@ public class Main {
         List<Integer> availablePokemonKeys = new ArrayList<>(POKEMON_CREATORS.keySet());
         for (int i = 1; i <= Trainer.MAX_TEAM_SIZE; i++) {
             System.out.println("\nTurno de selección nº " + i);
-            if (availablePokemonKeys.isEmpty()) break;
-            p1.addToTeam(pickPokemon(p1.getName(), availablePokemonKeys));
             
-            if (availablePokemonKeys.isEmpty()) break;
-            p2.addToTeam(pickPokemon(p2.getName(), availablePokemonKeys));
+            // El Jugador 1 elige si su equipo no está lleno
+            if (p1.getTeam().size() < Trainer.MAX_TEAM_SIZE) {
+                p1.addToTeam(pickPokemon(p1));
+            } else {
+                System.out.println(p1.getName() + ", tu equipo ya está completo.");
+            }
+
+            // El Jugador 2 elige si su equipo no está lleno
+            if (p2.getTeam().size() < Trainer.MAX_TEAM_SIZE) {
+                p2.addToTeam(pickPokemon(p2));
+            } else {
+                System.out.println(p2.getName() + ", tu equipo ya está completo.");
+            }
         }
     }
 
-    private static Pokemon pickPokemon(String trainerName, List<Integer> availableKeys) {
-        System.out.println(trainerName + ", elige a un compañero:");
-        availableKeys.forEach(key -> {
-            // Llamamos a get() solo para mostrar el nombre y el tipo. Es un poco ineficiente
-            // pero aceptable para la escala de esta aplicación.
+    private static Pokemon pickPokemon(Trainer trainer) {
+        // Obtener los nombres de los Pokémon que el entrenador ya tiene en su equipo
+        Set<String> pokemonNamesInTeam = trainer.getTeam().stream()
+                                                .map(Pokemon::getName)
+                                                .collect(Collectors.toSet());
+
+        // Filtrar los Pokémon disponibles basándose en lo que el entrenador ya tiene
+        List<Integer> availableChoicesForTrainerKeys = new ArrayList<>();
+        System.out.println(trainer.getName() + ", elige a un compañero:");
+        POKEMON_CREATORS.forEach((key, creator) -> {
             Pokemon p = POKEMON_CREATORS.get(key).get();
-            System.out.printf("%d. %s (%s)\n", key, p.getName(), p.getType().name());
+            if (!pokemonNamesInTeam.contains(p.getName())) {
+                System.out.printf("%d. %s (%s)\n", key, p.getName(), p.getType().name());
+                availableChoicesForTrainerKeys.add(key);
+            }
         });
 
         while (true) {
@@ -92,8 +110,7 @@ public class Main {
                 int choice = scanner.nextInt();
                 scanner.nextLine(); // Consume newline
 
-                if (availableKeys.contains(choice)) {
-                    availableKeys.remove(Integer.valueOf(choice)); // Eliminar por objeto, no por índice
+                if (availableChoicesForTrainerKeys.contains(choice)) {
                     return POKEMON_CREATORS.get(choice).get();
                 } else {
                     System.out.println("Opción no válida o Pokémon ya elegido. Por favor, elige de la lista.");
@@ -131,10 +148,8 @@ public class Main {
                 secondTrainer = p1;
             }
 
-            // Turno del primer atacante
             executeTurn(first, second);
 
-            // Comprobar si el defensor fue derrotado
             if (second.getHp() <= 0) {
                 System.out.println("\n¡" + second.getName() + " de " + second.getOwnerName() + " ha sido derrotado!");
                 if (!secondTrainer.hasAvailablePokemon()) break;
@@ -144,17 +159,14 @@ public class Main {
                 continue; // Reinicia el bucle para el nuevo enfrentamiento
             }
 
-            // Turno del segundo atacante
             executeTurn(second, first);
 
-            // Comprobar si el primer atacante fue derrotado
             if (first.getHp() <= 0) {
                 System.out.println("\n¡" + first.getName() + " de " + first.getOwnerName() + " ha sido derrotado!");
                 if (!firstTrainer.hasAvailablePokemon()) break;
 
                 Pokemon newPokemon = chooseNextPokemon(firstTrainer);
                 if (firstTrainer == p1) activeP1 = newPokemon; else activeP2 = newPokemon;
-                // No es necesario un 'continue' aquí, el bucle se reiniciará de forma natural
             }
         }
 
@@ -211,7 +223,7 @@ public class Main {
             System.out.print(prompt + " (1-" + maxOption + "): ");
             try {
                 int choice = scanner.nextInt();
-                scanner.nextLine(); // Consume newline
+                scanner.nextLine(); 
 
                 if (choice >= 1 && choice <= maxOption) {
                     return choice;
@@ -220,7 +232,7 @@ public class Main {
                 }
             } catch (InputMismatchException e) {
                 System.out.println("Entrada no válida. Por favor, introduce un número.");
-                scanner.nextLine(); // Consume the invalid input
+                scanner.nextLine();
             }
         }
     }
