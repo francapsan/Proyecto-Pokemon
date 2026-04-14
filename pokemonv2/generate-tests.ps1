@@ -1,3 +1,76 @@
+# PowerShell script to generate tests for changed classes using EvoSuite JAR
+
+# Source helper functions
+. (Join-Path $PSScriptRoot 'test-helpers.ps1')
+
+# Configuration
+$EvoSuiteJar = "evosuite.jar"
+$SourcePath = "src/main/java/com/pokemon"
+$TestsDir = "evosuite-tests"
+$Prefix = "generate-tests"
+
+# Validate EvoSuite JAR exists
+if (-not (Test-Path $EvoSuiteJar)) {
+    Write-Log "EvoSuite JAR not found at $EvoSuiteJar. Download from: https://github.com/EvoSuite/evosuite/releases" "Error" $Prefix
+    Write-Log "Place evosuite.jar in the project root" "Warning" $Prefix
+    exit 1
+}
+
+# Get changed Java files
+$changedFiles = Get-ChangedJavaFiles -SourcePath $SourcePath
+
+if ($changedFiles.Count -eq 0) {
+    Write-Log "No changed or new Java files detected" "Info" $Prefix
+    exit 0
+}
+
+Write-Log "Found $($changedFiles.Count) changed file(s)" "Info" $Prefix
+
+foreach ($file in $changedFiles) {
+    $fullClassName = Get-ClassNameFromPath -FilePath $file
+    $className = [System.IO.Path]::GetFileNameWithoutExtension($file)
+    
+    Write-Log "Generating tests for $fullClassName" "Info" $Prefix
+    
+    try {
+        # Run EvoSuite to generate tests
+        & java -jar $EvoSuiteJar -class $fullClassName -projectCP target/classes
+        
+        if ($LASTEXITCODE -ne 0) {
+            Write-Log "EvoSuite generation failed for $fullClassName (exit code: $LASTEXITCODE)" "Warning" $Prefix
+            continue
+        }
+        
+        # Find the generated test file
+        $testFile = Join-Path $TestsDir "com/pokemon/${className}_ESTest.java"
+        
+        if (-not (Test-Path $testFile)) {
+            Write-Log "No test file generated for $className" "Warning" $Prefix
+            continue
+        }
+        
+        # Read and extract test methods
+        $testContent = Get-Content $testFile -Raw
+        $testMethods = Get-TestMethods -TestFileContent $testContent
+        
+        if ($testMethods.Count -eq 0) {
+            Write-Log "No test methods found in generated file for $className" "Warning" $Prefix
+            continue
+        }
+        
+        # Merge tests into AppTest.java
+        if (Merge-TestsIntoAppTest -TestMethods $testMethods) {
+            Write-Log "Added $($testMethods.Count) test(s) for $className to AppTest.java" "Success" $Prefix
+        } else {
+            Write-Log "Failed to merge tests for $className" "Error" $Prefix
+        }
+        
+    } catch {
+        Write-Log "Exception while processing $fullClassName : $_" "Error" $Prefix
+    }
+}
+
+Write-Log "Test generation completed" "Success" $Prefix
 # PowerShell script to generate tests for changed classes using EvoSuite
 
 # Get changed Java files from git since last commit, including untracked files

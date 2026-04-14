@@ -1,5 +1,6 @@
 package com.pokemon;
 
+import java.util.ArrayList;
 import java.util.InputMismatchException;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -51,36 +52,51 @@ public class Main {
     private static Trainer createTrainer(int playerNumber) {
         System.out.print("\nJugador " + playerNumber + ", introduce tu nombre: ");
         String name = scanner.nextLine();
-        System.out.print("¿Eres chico o chica? (Aunque ahora no influya): ");
-        String gender = scanner.nextLine();
+        String gender;
+        while (true) {
+            System.out.print("¿Eres chico o chica?: ");
+            gender = scanner.nextLine().trim().toLowerCase();
+            if (gender.equals("chico") || gender.equals("chica")) {
+                break;
+            } else {
+                System.out.println("Opción no válida. Por favor, responde 'chico' o 'chica'.");
+            }
+        }
         return new Trainer(name, gender);
     }
 
     private static void startDraft(Trainer p1, Trainer p2) {
+        List<Integer> availablePokemonKeys = new ArrayList<>(POKEMON_CREATORS.keySet());
         for (int i = 1; i <= Trainer.MAX_TEAM_SIZE; i++) {
             System.out.println("\nTurno de selección nº " + i);
-            p1.addToTeam(pickPokemon(p1.getName()));
-            p2.addToTeam(pickPokemon(p2.getName()));
+            if (availablePokemonKeys.isEmpty()) break;
+            p1.addToTeam(pickPokemon(p1.getName(), availablePokemonKeys));
+            
+            if (availablePokemonKeys.isEmpty()) break;
+            p2.addToTeam(pickPokemon(p2.getName(), availablePokemonKeys));
         }
     }
 
-    private static Pokemon pickPokemon(String trainerName) {
+    private static Pokemon pickPokemon(String trainerName, List<Integer> availableKeys) {
         System.out.println(trainerName + ", elige a un compañero:");
-        POKEMON_CREATORS.forEach((key, creator) -> {
-            Pokemon p = creator.get();
+        availableKeys.forEach(key -> {
+            // Llamamos a get() solo para mostrar el nombre y el tipo. Es un poco ineficiente
+            // pero aceptable para la escala de esta aplicación.
+            Pokemon p = POKEMON_CREATORS.get(key).get();
             System.out.printf("%d. %s (%s)\n", key, p.getName(), p.getType().name());
         });
 
         while (true) {
-            System.out.print("Elige un Pokémon (1-" + POKEMON_CREATORS.size() + "): ");
+            System.out.print("Elige un Pokémon de la lista: ");
             try {
                 int choice = scanner.nextInt();
                 scanner.nextLine(); // Consume newline
 
-                if (POKEMON_CREATORS.containsKey(choice)) {
+                if (availableKeys.contains(choice)) {
+                    availableKeys.remove(Integer.valueOf(choice)); // Eliminar por objeto, no por índice
                     return POKEMON_CREATORS.get(choice).get();
                 } else {
-                    System.out.println("Opción no válida. Por favor, elige un número entre 1 y " + POKEMON_CREATORS.size() + ".");
+                    System.out.println("Opción no válida o Pokémon ya elegido. Por favor, elige de la lista.");
                 }
             } catch (InputMismatchException e) {
                 System.out.println("Entrada no válida. Por favor, introduce un número.");
@@ -170,24 +186,9 @@ public class Main {
             System.out.println((i + 1) + ". " + p.getName() + " (" + p.getHp() + " HP)");
         }
 
-        int choice = 0;
-        Pokemon chosenPokemon = null;
-        while (chosenPokemon == null) {
-            System.out.print("Elige un Pokémon (1-" + availablePokemon.size() + "): ");
-            try {
-                choice = scanner.nextInt();
-                scanner.nextLine(); // Consume newline
-                if (choice >= 1 && choice <= availablePokemon.size()) {
-                    chosenPokemon = availablePokemon.get(choice - 1);
-                } else {
-                    System.out.println("Opción no válida. Inténtalo de nuevo.");
-                }
-            } catch (InputMismatchException e) {
-                System.out.println("Entrada no válida. Por favor, introduce un número.");
-                scanner.nextLine(); // Consume the invalid input
-            }
-        }
-        
+        int choice = getPlayerChoice("Elige un Pokémon", availablePokemon.size());
+        Pokemon chosenPokemon = availablePokemon.get(choice - 1);
+
         System.out.println("¡Adelante, " + chosenPokemon.getName() + "!");
         return chosenPokemon;
     }
@@ -198,15 +199,22 @@ public class Main {
             System.out.println((i + 1) + ". " + attacker.getAttacks().get(i).getName());
         }
 
-        Attack selectedAttack = null;
-        while (selectedAttack == null) {
-            System.out.print("Elige un ataque (1-" + attacker.getAttacks().size() + "): ");
+        int moveChoice = getPlayerChoice("Elige un ataque", attacker.getAttacks().size());
+        Attack selectedAttack = attacker.getAttacks().get(moveChoice - 1);
+
+        System.out.println("¡El " + attacker.getName() + " de " + attacker.getOwnerName() + " usa " + selectedAttack.getName() + "!");
+        defender.receiveDamage(selectedAttack, attacker);
+    }
+
+    private static int getPlayerChoice(String prompt, int maxOption) {
+        while (true) {
+            System.out.print(prompt + " (1-" + maxOption + "): ");
             try {
-                int moveChoice = scanner.nextInt();
+                int choice = scanner.nextInt();
                 scanner.nextLine(); // Consume newline
 
-                if (moveChoice >= 1 && moveChoice <= attacker.getAttacks().size()) {
-                    selectedAttack = attacker.getAttacks().get(moveChoice - 1);
+                if (choice >= 1 && choice <= maxOption) {
+                    return choice;
                 } else {
                     System.out.println("Opción no válida. Inténtalo de nuevo.");
                 }
@@ -215,8 +223,5 @@ public class Main {
                 scanner.nextLine(); // Consume the invalid input
             }
         }
-
-        System.out.println("¡El " + attacker.getName() + " de " + attacker.getOwnerName() + " usa " + selectedAttack.getName() + "!");
-        defender.receiveDamage(selectedAttack, attacker);
     }
 }

@@ -1,5 +1,76 @@
 # PowerShell script to generate and merge EvoSuite tests for changed classes
 
+# Source helper functions
+. (Join-Path $PSScriptRoot 'test-helpers.ps1')
+
+# Configuration
+$SourcePath = "src/main/java/com/pokemon"
+$TestsDir = "evosuite-tests"
+$Prefix = "merge-tests"
+
+# Get changed Java files
+$changedFiles = Get-ChangedJavaFiles -SourcePath $SourcePath
+
+if ($changedFiles.Count -eq 0) {
+    Write-Log "No changed or new Java files detected" "Info" $Prefix
+    exit 0
+}
+
+Write-Log "Found $($changedFiles.Count) changed file(s)" "Info" $Prefix
+
+foreach ($file in $changedFiles) {
+    $fullClassName = Get-ClassNameFromPath -FilePath $file
+    $className = [System.IO.Path]::GetFileNameWithoutExtension($file)
+    
+    Write-Log "Generating tests for $fullClassName" "Info" $Prefix
+    
+    try {
+        # Run EvoSuite Maven plugin
+        & mvn evosuite:generate -DtargetClass=$fullClassName -q
+        
+        if ($LASTEXITCODE -ne 0) {
+            Write-Log "Maven EvoSuite generation failed for $fullClassName (exit code: $LASTEXITCODE)" "Warning" $Prefix
+            continue
+        }
+        
+        # Find the generated test file
+        $testFile = Join-Path $TestsDir "com/pokemon/${className}_ESTest.java"
+        
+        if (-not (Test-Path $testFile)) {
+            Write-Log "No test file generated for $className" "Warning" $Prefix
+            continue
+        }
+        
+        # Read and extract test methods
+        $testContent = Get-Content $testFile -Raw
+        $testMethods = Get-TestMethods -TestFileContent $testContent
+        
+        if ($testMethods.Count -eq 0) {
+            Write-Log "No test methods found in generated file for $className" "Warning" $Prefix
+            continue
+        }
+        
+        # Merge tests into AppTest.java
+        if (Merge-TestsIntoAppTest -TestMethods $testMethods) {
+            Write-Log "Added $($testMethods.Count) test(s) for $className to AppTest.java" "Success" $Prefix
+        } else {
+            Write-Log "Failed to merge tests for $className" "Error" $Prefix
+        }
+        
+    } catch {
+        Write-Log "Exception while processing $fullClassName : $_" "Error" $Prefix
+    }
+}
+
+# Clean up evosuite-tests folder
+if (Test-Path $TestsDir) {
+    Write-Log "Cleaning up $TestsDir directory" "Info" $Prefix
+    Remove-Item $TestsDir -Recurse -Force
+}
+
+Write-Log "Test generation and merge completed" "Success" $Prefix
+# PowerShell script to generate and merge EvoSuite tests for changed classes
+
 # Get changed Java files from git since last commit, including untracked files
 $changedFiles = git diff --diff-filter=ACMRT HEAD --name-only -- src/main/java/com/pokemon
 $untrackedFiles = git ls-files --others --exclude-standard -- src/main/java/com/pokemon
