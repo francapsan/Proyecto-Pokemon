@@ -1,55 +1,54 @@
 package com.pokemon;
 
 import static org.junit.Assert.assertEquals;
+import org.junit.Before;
 import org.junit.Test;
 
 public class AppTest {
 
+    private Pokemon blastoise;
+    private Pokemon charizard;
+    private Attack waterAttack;
+    private Attack fireAttack;
+
+    @Before
+    public void setUp() {
+        blastoise = new Pokemon("Blastoise", PokemonType.AGUA, 100, 78);
+        waterAttack = new Attack("Hidrobomba", 40, PokemonType.AGUA);
+        blastoise.learnAttack(waterAttack);
+
+        charizard = new Pokemon("Charizard", PokemonType.FUEGO, 100, 100);
+        fireAttack = new Attack("Lanzallamas", 40, PokemonType.FUEGO);
+        charizard.learnAttack(fireAttack);
+    }
+
     @Test
     public void testSuperEffectiveDamage() {
-        Pokemon attacker = new Pokemon("Blastoise", PokemonType.AGUA, 100, 78);
-        Attack waterAttack = new Attack("Hidrobomba", 40, PokemonType.AGUA);
-        attacker.learnAttack(waterAttack);
-
-        Pokemon defender = new Pokemon("Charizard", PokemonType.FUEGO, 100, 100);
-        int initialHp = defender.getHp();
-
-        defender.receiveDamage(waterAttack, attacker);
+        int initialHp = charizard.getHp();
+        charizard.receiveDamage(waterAttack, blastoise);
 
         int expectedDamage = waterAttack.getDamage() * 2;
-        int finalHp = defender.getHp();
-
-        assertEquals(initialHp - expectedDamage, finalHp);
+        assertEquals(initialHp - expectedDamage, charizard.getHp());
     }
 
     @Test
     public void testNormalDamage() {
-        Pokemon attacker = new Pokemon("Charizard", PokemonType.FUEGO, 100, 100);
-        Attack fireAttack = new Attack("Lanzallamas", 40, PokemonType.FUEGO);
-        attacker.learnAttack(fireAttack);
+        Pokemon anotherCharizard = new Pokemon("Otro Charizard", PokemonType.FUEGO, 100, 100);
+        int initialHp = anotherCharizard.getHp();
 
-        Pokemon defender = new Pokemon("Otro Charizard", PokemonType.FUEGO, 100, 100);
-        int initialHp = defender.getHp();
-
-        defender.receiveDamage(fireAttack, attacker);
+        anotherCharizard.receiveDamage(fireAttack, charizard);
 
         int expectedDamage = fireAttack.getDamage();
-        assertEquals(initialHp - expectedDamage, defender.getHp());
+        assertEquals(initialHp - expectedDamage, anotherCharizard.getHp());
     }
 
     @Test
     public void testNotVeryEffectiveDamage() {
-        Pokemon attacker = new Pokemon("Charizard", PokemonType.FUEGO, 100, 100);
-        Attack fireAttack = new Attack("Lanzallamas", 40, PokemonType.FUEGO);
-        attacker.learnAttack(fireAttack);
+        int initialHp = blastoise.getHp();
+        blastoise.receiveDamage(fireAttack, charizard);
 
-        Pokemon defender = new Pokemon("Blastoise", PokemonType.AGUA, 100, 78);
-        int initialHp = defender.getHp();
-
-        defender.receiveDamage(fireAttack, attacker);
-
-        int expectedDamage = fireAttack.getDamage() / 2;
-        assertEquals(initialHp - expectedDamage, defender.getHp());
+        int expectedDamage = (int) (fireAttack.getDamage() * 0.5); // Usamos 0.5 para consistencia con TypeChart
+        assertEquals(initialHp - expectedDamage, blastoise.getHp());
     }
     @Test
     public void testTypeChartLogic() {
