@@ -56,8 +56,8 @@ public class Main {
         String gender;
         while (true) {
             System.out.print("¿Eres chico o chica?: ");
-            gender = scanner.nextLine().trim().toLowerCase();
-            if (gender.equals("chico") || gender.equals("chica")) {
+            gender = scanner.nextLine().trim();
+            if (gender.equalsIgnoreCase("chico") || gender.equalsIgnoreCase("chica")) {
                 break;
             } else {
                 System.out.println("Opción no válida. Por favor, responde 'chico' o 'chica'.");
@@ -97,7 +97,7 @@ public class Main {
         List<Integer> availableChoicesForTrainerKeys = new ArrayList<>();
         System.out.println(trainer.getName() + ", elige a un compañero:");
         POKEMON_CREATORS.forEach((key, creator) -> {
-            Pokemon p = POKEMON_CREATORS.get(key).get();
+            Pokemon p = creator.get();
             if (!pokemonNamesInTeam.contains(p.getName())) {
                 System.out.printf("%d. %s (%s)\n", key, p.getName(), p.getType().name());
                 availableChoicesForTrainerKeys.add(key);
@@ -105,19 +105,11 @@ public class Main {
         });
 
         while (true) {
-            System.out.print("Elige un Pokémon de la lista: ");
-            try {
-                int choice = scanner.nextInt();
-                scanner.nextLine(); // Consume newline
-
-                if (availableChoicesForTrainerKeys.contains(choice)) {
-                    return POKEMON_CREATORS.get(choice).get();
-                } else {
-                    System.out.println("Opción no válida o Pokémon ya elegido. Por favor, elige de la lista.");
-                }
-            } catch (InputMismatchException e) {
-                System.out.println("Entrada no válida. Por favor, introduce un número.");
-                scanner.nextLine(); // Consume the invalid input
+            int choice = readIntInput("Elige un Pokémon de la lista: ");
+            if (availableChoicesForTrainerKeys.contains(choice)) {
+                return POKEMON_CREATORS.get(choice).get();
+            } else {
+                System.out.println("Opción no válida o Pokémon ya elegido. Por favor, elige de la lista.");
             }
         }
     }
@@ -220,19 +212,25 @@ public class Main {
 
     private static int getPlayerChoice(String prompt, int maxOption) {
         while (true) {
-            System.out.print(prompt + " (1-" + maxOption + "): ");
+            int choice = readIntInput(prompt + " (1-" + maxOption + "): ");
+            if (choice >= 1 && choice <= maxOption) {
+                return choice;
+            } else {
+                System.out.println("Opción no válida. Inténtalo de nuevo.");
+            }
+        }
+    }
+
+    private static int readIntInput(String prompt) {
+        while (true) {
+            System.out.print(prompt);
             try {
                 int choice = scanner.nextInt();
-                scanner.nextLine(); 
-
-                if (choice >= 1 && choice <= maxOption) {
-                    return choice;
-                } else {
-                    System.out.println("Opción no válida. Inténtalo de nuevo.");
-                }
+                scanner.nextLine(); // Consume newline
+                return choice;
             } catch (InputMismatchException e) {
                 System.out.println("Entrada no válida. Por favor, introduce un número.");
-                scanner.nextLine();
+                scanner.nextLine(); // Consume the invalid input
             }
         }
     }

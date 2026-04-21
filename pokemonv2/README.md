@@ -31,7 +31,7 @@ Este proyecto es un simulador de batallas Pokémon por turnos desarrollado en Ja
 
 Asegúrate de tener instalado lo siguiente en tu sistema:
 
-- **Java Development Kit (JDK)** - Versión 11 o superior.
+- **Java Development Kit (JDK)** - Versión 25.
 - **Apache Maven** - Para compilar y ejecutar el proyecto.
 
 ---

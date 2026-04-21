@@ -41,8 +41,7 @@ public class Pokemon {
         }
 
         int finalDamage = (int) (enemyAttack.getDamage() * multiplier);
-        this.hp -= finalDamage;
-        if (this.hp < 0) this.hp = 0;
+        this.hp = Math.max(0, this.hp - finalDamage);
 
         System.out.println("El " + this.name + " de " + this.ownerName + 
                            " ha recibido " + finalDamage + " de daño. (HP restante: " + this.hp + ")");

@@ -26,10 +26,7 @@ public void addToTeam(Pokemon pokemon) {
 }
 
     public boolean hasAvailablePokemon() {
-        for (Pokemon p : team) {
-            if (p.getHp() > 0) return true;
-        }
-        return false;
+        return team.stream().anyMatch(p -> p.getHp() > 0);
     }
 
     public String getName() { return name; }
