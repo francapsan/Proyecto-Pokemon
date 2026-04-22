@@ -15,7 +15,7 @@ $action = {
     
     $currentTime = Get-Date
     if (($currentTime - $script:lastActionTime).TotalMilliseconds -lt $debounceMillis) {
-        return # Ignorar si la última acción fue hace muy poco
+        return
     }
     lock ($script:actionLock) {
         $script:lastActionTime = $currentTime
