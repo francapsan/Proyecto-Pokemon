@@ -6,6 +6,7 @@ const TrainerSetup = () => {
     const [isWaiting, setIsWaiting] = useState(false);
     
     const [isMusicPlaying, setIsMusicPlaying] = useState(true); // Estado para controlar si la música de fondo está sonando
+    const [showStartModal, setShowStartModal] = useState(true); // Modal de inicio
     const [name, setName] = useState('');
     const [gender, setGender] = useState('');
     const [message, setMessage] = useState('');
@@ -21,25 +22,25 @@ const TrainerSetup = () => {
         backgroundMusic.current.volume = 0.3; // Ajusta el volumen a tu gusto
 
         // Inicializar sonido de click
-        clickSound.current = new Audio('/sounds/Click Buttom.mp3'); // Actualizado al nombre de tu archivo
+        clickSound.current = new Audio('/sounds/Click Button.mp3'); // Actualizado al nombre de tu archivo
         clickSound.current.volume = 0.7; // Ajusta el volumen a tu gusto
 
-        // Intentar reproducir la música de fondo. Los navegadores pueden bloquear el autoplay sin interacción del usuario.
-        backgroundMusic.current.play().catch(e => {
-            console.warn("Autoplay de la música de fondo bloqueado. Se intentará reproducir después de la primera interacción del usuario.", e);
-            setIsMusicPlaying(false); // Si el autoplay falla, la música no está sonando
-        });
+        // No reproducir automáticamente, esperar a que el usuario presione el modal
+    }, []);
 
-        // Función de limpieza: pausar y liberar los recursos de audio al desmontar el componente
-        return () => {
-            if (backgroundMusic.current) {
-                backgroundMusic.current.pause();
-                backgroundMusic.current.currentTime = 0; // Reiniciar la posición de reproducción
-                backgroundMusic.current = null;
-            }
-            if (clickSound.current) clickSound.current = null;
-        };
-    }, []); // El array de dependencias vacío asegura que esto se ejecute solo una vez al montar y limpiar al desmontar
+    // Efecto para reproducir música cuando se cierre el modal
+    useEffect(() => {
+        if (!showStartModal && backgroundMusic.current && backgroundMusic.current.paused) {
+            backgroundMusic.current.play().catch(e => {
+                console.warn("Error al reproducir música:", e);
+            });
+        }
+    }, [showStartModal]);
+
+    const handleStartGame = () => {
+        playClickSound();
+        setShowStartModal(false);
+    };
 
     const playClickSound = () => {
         if (clickSound.current) {
@@ -131,6 +132,17 @@ const TrainerSetup = () => {
 
     return (
         <> {/* Usar un fragmento para envolver múltiples elementos */}
+            {showStartModal && (
+                <div className="start-modal-overlay">
+                    <div className="start-modal">
+                        <h1>--- CAMPEONATO POKÉMON ---</h1>
+                        <p>¡Bienvenido entrenador!</p>
+                        <button className="start-button" onClick={handleStartGame}>
+                            Comenzar
+                        </button>
+                    </div>
+                </div>
+            )}
             <div className="music-toggle" onClick={toggleBackgroundMusic}>
                 {isMusicPlaying ? '🔊' : '🔇'} {/* Iconos Unicode */}
             </div>
@@ -185,7 +197,7 @@ const TrainerSetup = () => {
                 </button>
             </div> {/* Cierre de trainer-setup-card */}
             </div> {/* Cierre de trainer-setup-container */}
-        </> {/* Cierre del fragmento */}
+        </>
     );
 };
 
