@@ -1,10 +1,40 @@
 .trainer-setup-container {
+    /* Asegúrate de que el contenedor principal no tenga un position: relative si quieres que el music-toggle se posicione respecto al viewport */
+    /* Si quieres que el music-toggle esté dentro de este contenedor y se posicione respecto a él, entonces este contenedor debería tener position: relative */
+    /* Para este caso, lo dejaremos como está y el music-toggle se posicionará respecto al viewport */
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
     background-color: #e0f2fe;
     font-family: 'Courier New', Courier, monospace;
+}
+
+.music-toggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 2rem; /* Tamaño del icono */
+    cursor: pointer;
+    z-index: 1000; /* Asegura que esté por encima de otros elementos */
+    color: #3b4cca; /* Color del icono */
+    background-color: white;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    transition: transform 0.1s ease, background-color 0.2s ease;
+}
+
+.music-toggle:hover {
+    background-color: #e0f2fe; /* Un ligero cambio al pasar el ratón */
+}
+
+.music-toggle:active {
+    transform: scale(0.95);
 }
 
 .trainer-setup-card {
@@ -22,6 +52,11 @@
     text-shadow: 2px 2px 0 #3b4cca, -2px -2px 0 #3b4cca, 2px -2px 0 #3b4cca, -2px 2px 0 #3b4cca;
     font-size: 1.8rem;
     margin-bottom: 2rem;
+}
+
+.player-turn-title {
+    color: #3b4cca;
+    margin-bottom: 1.5rem;
 }
 
 .input-group {

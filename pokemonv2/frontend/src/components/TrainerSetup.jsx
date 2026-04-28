@@ -1,16 +1,79 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import './TrainerSetup.css';
 
 const TrainerSetup = () => {
     const [currentPlayer, setCurrentPlayer] = useState(1);
     const [isWaiting, setIsWaiting] = useState(false);
     
+    const [isMusicPlaying, setIsMusicPlaying] = useState(true); // Estado para controlar si la música de fondo está sonando
     const [name, setName] = useState('');
     const [gender, setGender] = useState('');
     const [message, setMessage] = useState('');
 
+    // Refs para los elementos de audio
+    const backgroundMusic = useRef(null);
+    const clickSound = useRef(null);
+
+    useEffect(() => {
+        // Inicializar música de fondo
+        backgroundMusic.current = new Audio('/sounds/Theme.mp3'); // Actualizado al nombre de tu archivo
+        backgroundMusic.current.loop = true;
+        backgroundMusic.current.volume = 0.3; // Ajusta el volumen a tu gusto
+
+        // Inicializar sonido de click
+        clickSound.current = new Audio('/sounds/Click Buttom.mp3'); // Actualizado al nombre de tu archivo
+        clickSound.current.volume = 0.7; // Ajusta el volumen a tu gusto
+
+        // Intentar reproducir la música de fondo. Los navegadores pueden bloquear el autoplay sin interacción del usuario.
+        backgroundMusic.current.play().catch(e => {
+            console.warn("Autoplay de la música de fondo bloqueado. Se intentará reproducir después de la primera interacción del usuario.", e);
+            setIsMusicPlaying(false); // Si el autoplay falla, la música no está sonando
+        });
+
+        // Función de limpieza: pausar y liberar los recursos de audio al desmontar el componente
+        return () => {
+            if (backgroundMusic.current) {
+                backgroundMusic.current.pause();
+                backgroundMusic.current.currentTime = 0; // Reiniciar la posición de reproducción
+                backgroundMusic.current = null;
+            }
+            if (clickSound.current) clickSound.current = null;
+        };
+    }, []); // El array de dependencias vacío asegura que esto se ejecute solo una vez al montar y limpiar al desmontar
+
+    const playClickSound = () => {
+        if (clickSound.current) {
+            clickSound.current.currentTime = 0; // Reiniciar el sonido para que siempre empiece desde el principio
+            clickSound.current.play().catch(e => console.error("Error al reproducir el sonido de click:", e));
+        }
+    };
+
+    const toggleBackgroundMusic = () => {
+        if (!backgroundMusic.current) return;
+
+        if (isMusicPlaying) {
+            backgroundMusic.current.pause();
+            setIsMusicPlaying(false);
+        } else {
+            backgroundMusic.current.play()
+                .then(() => {
+                    setIsMusicPlaying(true); // Actualizar solo si la reproducción es exitosa
+                })
+                .catch(e => {
+                    console.error("Error al reproducir la música de fondo:", e);
+                    setIsMusicPlaying(false); // Si falla al intentar reproducir, se mantiene como no sonando
+                });
+        }
+    };
+
     const handleStartAdventure = async (e) => {
         e.preventDefault();
+        playClickSound(); // Reproducir sonido de click al enviar el formulario
+
+        // Si la música de fondo fue bloqueada Y el usuario quiere que suene, intentar reproducirla ahora que hay interacción del usuario
+        if (backgroundMusic.current && backgroundMusic.current.paused && isMusicPlaying) {
+            backgroundMusic.current.play().catch(e => console.error("Error al reproducir la música de fondo después de la interacción:", e));
+        }
         
         if (!name.trim()) {
             setMessage("¡Falta información! Introduce un nombre.");
@@ -46,8 +109,14 @@ const TrainerSetup = () => {
                         setIsWaiting(false);
                     }, 4000);
                 } else {
-                    setMessage(`¡Bienvenid@, ${data.name}! Ambos jugadores están listos. La elección de Pokemons dara comienzo...`);
+                    setMessage(`¡Bienvenid@, ${data.name}! Ambos jugadores están listos. La elección de Pokemons dará comienzo...`);
                     setIsWaiting(false);
+                    // Opcional: pausar la música de fondo cuando ambos jugadores estén listos y la fase cambie
+                    if (backgroundMusic.current) {
+                        backgroundMusic.current.pause();
+                        backgroundMusic.current.currentTime = 0;
+                        setIsMusicPlaying(false); // Actualizar el estado de la música
+                    }
                 }
             } else {
                 const errorText = await response.text();
@@ -61,19 +130,24 @@ const TrainerSetup = () => {
     };
 
     return (
-        <div className="trainer-setup-container">
+        <> {/* Usar un fragmento para envolver múltiples elementos */}
+            <div className="music-toggle" onClick={toggleBackgroundMusic}>
+                {isMusicPlaying ? '🔊' : '🔇'} {/* Iconos Unicode */}
+            </div>
+            <div className="trainer-setup-container">
             <div className="trainer-setup-card">
                 <h1 className="title">--- CAMPEONATO POKÉMON ---</h1>
                 
-                <h2 style={{ color: '#3b4cca', marginBottom: '1.5rem' }}>
+                <h2 className="player-turn-title">
                     Turno del Jugador {currentPlayer}
                 </h2>
                 
                 <div className="input-group">
-                    <label>Introduce tu nombre:</label>
-                    <input 
-                        type="text" 
-                        value={name} 
+                    <label htmlFor="name-input">Introduce tu nombre:</label>
+                    <input
+                        type="text"
+                        id="name-input"
+                        value={name}
                         onChange={(e) => setName(e.target.value)} 
                         placeholder="Ej. Ash Ketchum" 
                         className="name-input"
@@ -84,16 +158,16 @@ const TrainerSetup = () => {
                 <div className="input-group">
                     <label>¿Eres chico o chica?</label>
                     <div className="gender-buttons">
-                        <button 
+                        <button
                             className={`gender-btn ${gender === 'chico' ? 'selected' : ''}`} 
-                            onClick={() => setGender('chico')}
+                            onClick={() => { setGender('chico'); playClickSound(); }} // Añadido sonido de click
                             disabled={isWaiting}
                         >
                             Chico
                         </button>
-                        <button 
+                        <button
                             className={`gender-btn ${gender === 'chica' ? 'selected' : ''}`} 
-                            onClick={() => setGender('chica')}
+                            onClick={() => { setGender('chica'); playClickSound(); }} // Añadido sonido de click
                             disabled={isWaiting}
                         >
                             Chica
@@ -102,15 +176,16 @@ const TrainerSetup = () => {
                 </div>
                 {message && <p className="message">{message}</p>}
                 
-                <button 
-                    className="start-btn" 
+                <button
+                    className="start-btn"
                     onClick={handleStartAdventure}
                     disabled={isWaiting}
                 >
                     {currentPlayer === 1 ? 'Registrar Jugador 1' : 'Comenzar Aventura'}
                 </button>
-            </div>
-        </div>
+            </div> {/* Cierre de trainer-setup-card */}
+            </div> {/* Cierre de trainer-setup-container */}
+        </> {/* Cierre del fragmento */}
     );
 };
 

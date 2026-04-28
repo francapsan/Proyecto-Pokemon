@@ -1,8 +1,8 @@
 package com.pokemon;
 
-import static org.junit.Assert.assertEquals;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AppTest {
 
@@ -11,12 +11,11 @@ public class AppTest {
     private Attack waterAttack;
     private Attack fireAttack;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         blastoise = new Pokemon("Blastoise", PokemonType.AGUA, 100, 78);
         waterAttack = new Attack("Hidrobomba", 40, PokemonType.AGUA);
         blastoise.learnAttack(waterAttack);
-
         charizard = new Pokemon("Charizard", PokemonType.FUEGO, 100, 100);
         fireAttack = new Attack("Lanzallamas", 40, PokemonType.FUEGO);
         charizard.learnAttack(fireAttack);

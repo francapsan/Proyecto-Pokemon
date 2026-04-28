@@ -11,7 +11,6 @@ public class Pokemon {
     private final List<Attack> attacks;
     
     private int hp;
-    private String ownerName; // Nombre del entrenador que posee este Pokémon
 
     public Pokemon(String name, PokemonType type, int hp, int speed) {
         this.name = name;
@@ -19,10 +18,6 @@ public class Pokemon {
         this.hp = hp;
         this.speed = speed;
         this.attacks = new ArrayList<>();
-    }
-
-    public void setOwnerName(String ownerName) {
-        this.ownerName = ownerName;
     }
 
     public void learnAttack(Attack attack) {
@@ -43,14 +38,12 @@ public class Pokemon {
         int finalDamage = (int) (enemyAttack.getDamage() * multiplier);
         this.hp = Math.max(0, this.hp - finalDamage);
 
-        System.out.println("El " + this.name + " de " + this.ownerName + 
-                           " ha recibido " + finalDamage + " de daño. (HP restante: " + this.hp + ")");
+        System.out.println("El " + this.name + " ha recibido " + finalDamage + " de daño. (HP restante: " + this.hp + ")");
     }
 
     public String getName() { return name; }
     public int getHp() { return hp; }
     public int getSpeed() { return speed; }
     public List<Attack> getAttacks() { return attacks; }
-    public String getOwnerName() { return ownerName; }
     public PokemonType getType() { return type; }
 }
