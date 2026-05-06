@@ -12,18 +12,33 @@ import org.springframework.web.bind.annotation.RestController;
 @CrossOrigin(origins = {"http://localhost:3000", "http://localhost:5173"})
 public class TrainerController {
 
+    private static final String EMPTY_NAME_ERROR = "El nombre no puede estar vacío.";
+    private static final String INVALID_GENDER_ERROR = "Opción no válida. Por favor, responde 'chico' o 'chica'.";
+    private static final String VALID_MALE = "chico";
+    private static final String VALID_FEMALE = "chica";
+
     @PostMapping("/create")
     public ResponseEntity<?> createTrainer(@RequestBody TrainerDTO trainerDTO) {
+        try {
+            validateTrainerDTO(trainerDTO);
+            Trainer newTrainer = new Trainer(trainerDTO.name().trim(), trainerDTO.gender().toLowerCase());
+            return ResponseEntity.ok(newTrainer);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    private void validateTrainerDTO(TrainerDTO trainerDTO) {
+        if (trainerDTO == null) {
+            throw new IllegalArgumentException("Los datos del entrenador no pueden ser nulos.");
+        }
         if (trainerDTO.name() == null || trainerDTO.name().trim().isEmpty()) {
-            return ResponseEntity.badRequest().body("El nombre no puede estar vacío.");
+            throw new IllegalArgumentException(EMPTY_NAME_ERROR);
         }
-
-        String gender = trainerDTO.gender();
-        if (gender == null || (!gender.equalsIgnoreCase("chico") && !gender.equalsIgnoreCase("chica"))) {
-            return ResponseEntity.badRequest().body("Opción no válida. Por favor, responde 'chico' o 'chica'.");
+        if (trainerDTO.gender() == null || 
+            (!trainerDTO.gender().equalsIgnoreCase(VALID_MALE) && 
+             !trainerDTO.gender().equalsIgnoreCase(VALID_FEMALE))) {
+            throw new IllegalArgumentException(INVALID_GENDER_ERROR);
         }
-
-        Trainer newTrainer = new Trainer(trainerDTO.name().trim(), gender.toLowerCase());
-        return ResponseEntity.ok(newTrainer);
     }
 }

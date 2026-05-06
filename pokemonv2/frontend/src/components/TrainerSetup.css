@@ -1,23 +1,22 @@
 .trainer-setup-container {
-    /* Asegúrate de que el contenedor principal no tenga un position: relative si quieres que el music-toggle se posicione respecto al viewport */
-    /* Si quieres que el music-toggle esté dentro de este contenedor y se posicione respecto a él, entonces este contenedor debería tener position: relative */
-    /* Para este caso, lo dejaremos como está y el music-toggle se posicionará respecto al viewport */
     display: flex;
     justify-content: center;
     align-items: center;
     height: 100vh;
-    background-color: #e0f2fe;
+    background-color: white;
     font-family: 'Courier New', Courier, monospace;
+    position: relative;
+    overflow: hidden;
 }
 
 .music-toggle {
     position: absolute;
     top: 20px;
     right: 20px;
-    font-size: 2rem; /* Tamaño del icono */
+    font-size: 2rem;
     cursor: pointer;
-    z-index: 1000; /* Asegura que esté por encima de otros elementos */
-    color: #3b4cca; /* Color del icono */
+    z-index: 1000;
+    color: #3b4cca;
     background-color: white;
     border-radius: 50%;
     width: 50px;
@@ -30,7 +29,7 @@
 }
 
 .music-toggle:hover {
-    background-color: #e0f2fe; /* Un ligero cambio al pasar el ratón */
+    background-color: #e0f2fe;
 }
 
 .music-toggle:active {
@@ -45,6 +44,8 @@
     width: 450px;
     text-align: center;
     box-shadow: 8px 8px 0px rgba(59, 76, 202, 0.3);
+    position: relative;
+    z-index: 1;
 }
 
 .title {
@@ -137,7 +138,6 @@
     transform: scale(0.95);
 }
 
-/* Estilos para el modal de inicio */
 .start-modal-overlay {
     position: fixed;
     top: 0;
@@ -217,4 +217,47 @@
 
 .start-button:active {
     transform: scale(0.95);
+}
+
+.trainer-gif {
+    position: absolute;
+    top: 50%;
+    height: auto;
+    width: calc(50% - 225px - 8vw);
+    max-height: 80vh;
+    opacity: 0;
+    animation-duration: 0.7s;
+    animation-fill-mode: forwards;
+    animation-timing-function: ease-out;
+}
+
+.chico-gif {
+    left: 2vw;
+    animation-name: slideInLeft;
+}
+
+.chica-gif {
+    right: 2vw;
+    animation-name: slideInRight;
+}
+@keyframes slideInLeft {
+    from {
+        transform: translateX(-100%) translateY(-50%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0) translateY(-50%);
+        opacity: 1;
+    }
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%) translateY(-50%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0) translateY(-50%);
+        opacity: 1;
+    }
 }

@@ -1,7 +1,7 @@
 . (Join-Path $PSScriptRoot 'test-helpers.ps1')
 
-$script:lastActionTime = [DateTime]::MinValue
-$script:actionLock = New-Object System.Object
+$script:lastActionTime = [DateTime]::MinValue 
+$script:actionLock = New-Object System.Object 
 $debounceMillis = 1500
 
 $watcher = New-Object System.IO.FileSystemWatcher -Property @{
@@ -12,8 +12,7 @@ $watcher = New-Object System.IO.FileSystemWatcher -Property @{
 }
 
 $action = {
-    
-    $currentTime = Get-Date
+    $currentTime = Get-Date 
     if (($currentTime - $script:lastActionTime).TotalMilliseconds -lt $debounceMillis) {
         return
     }
@@ -22,25 +21,25 @@ $action = {
     }
 
     Write-Log "Cambio detectado en '$($EventArgs.Name)'. Iniciando ciclo de test..." "Info" "Watcher"
-    mvn clean compile -q
+    mvn clean compile -q 
     if ($LASTEXITCODE -ne 0) {
         Write-Log "Error de compilación. Por favor, revisa tu código." "Error" "Watcher"
         return
     }
 
     Write-Log "Generando y fusionando tests..." "Info" "Watcher"
-    powershell -File (Join-Path $PSScriptRoot 'merge-tests.ps1')
+    powershell -File (Join-Path $PSScriptRoot 'merge-tests.ps1') 
     if ($LASTEXITCODE -ne 0) {
         Write-Log "Error al generar o fusionar tests. Revisa 'merge-tests.ps1'." "Error" "Watcher"
         return
     }
 
     Write-Log "Ejecutando todos los tests..." "Info" "Watcher"
-    mvn test
+    mvn test 
     if ($LASTEXITCODE -ne 0) {
         Write-Log "¡Algunos tests fallaron! Revisa los resultados." "Error" "Watcher"
     } else {
-        Write-Log "Todos los tests pasaron correctamente." "Success" "Watcher"
+        Write-Log "Todos los tests pasaron correctamente." "Success" "Watcher" 
     }
 }
 

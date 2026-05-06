@@ -5,7 +5,7 @@ if ($changed.Count -eq 0) { Write-Log "Sin cambios detectados" "Info" "Merge"; e
 $classNames = $changed | ForEach-Object { Get-ClassNameFromPath $_ }
 $targetClasses = $classNames -join ","
 Write-Log "Generando tests para: $($classNames -join ', ')" "Info" "Merge"
-mvn evosuite:generate -DtargetClass=$targetClasses -q # 2>&1 | Out-Null # Puedes quitar -q para ver más detalles si hay errores
+mvn evosuite:generate -DtargetClass=$targetClasses -q
 if ($LASTEXITCODE -ne 0) {
     Write-Log "EvoSuite falló al generar tests para $targetClasses. Asegúrate de que las clases son compilables y válidas." "Error" "Merge"
     exit 1

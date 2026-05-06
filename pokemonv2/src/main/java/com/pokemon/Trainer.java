@@ -11,18 +11,26 @@ public class Trainer {
     private final List<Pokemon> team;
 
     public Trainer(String name, String gender) {
-        this.name = name;
-        this.gender = gender;
+        if (name == null || name.trim().isEmpty()) {
+            throw new IllegalArgumentException("El nombre del entrenador no puede estar vacío");
+        }
+        if (gender == null || (!gender.equalsIgnoreCase("chico") && !gender.equalsIgnoreCase("chica"))) {
+            throw new IllegalArgumentException("El género debe ser 'chico' o 'chica'");
+        }
+        this.name = name.trim();
+        this.gender = gender.toLowerCase();
         this.team = new ArrayList<>();
     }
 
-public void addToTeam(Pokemon pokemon) {
-    if (this.team.size() < MAX_TEAM_SIZE) {
+    public void addToTeam(Pokemon pokemon) {
+        if (pokemon == null) {
+            throw new IllegalArgumentException("El Pokémon no puede ser nulo");
+        }
+        if (this.team.size() >= MAX_TEAM_SIZE) {
+            throw new IllegalStateException("¡El equipo está lleno! Máximo " + MAX_TEAM_SIZE + " Pokémon");
+        }
         this.team.add(pokemon);
-    } else {
-        System.out.println("¡El equipo está lleno!");
     }
-}
 
     public boolean hasAvailablePokemon() {
         return team.stream().anyMatch(p -> p.getHp() > 0);
@@ -30,5 +38,5 @@ public void addToTeam(Pokemon pokemon) {
 
     public String getName() { return name; }
     public String getGender() { return gender; }
-    public List<Pokemon> getTeam() { return team; }
+    public List<Pokemon> getTeam() { return new ArrayList<>(team); }
 }
