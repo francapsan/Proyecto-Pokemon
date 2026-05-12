@@ -1,24 +1,29 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './TrainerSetup.css';
+import { API_CONFIG, AUDIO_CONFIG, GAME_CONFIG } from '../constants/config';
+import PokemonSelection from './PokemonSelection';
 
 const TrainerSetup = () => { 
     const [currentPlayer, setCurrentPlayer] = useState(1);
     const [isWaiting, setIsWaiting] = useState(false);
     const [showStartModal, setShowStartModal] = useState(true);
+    const [trainers, setTrainers] = useState([]);
+    const [isSelectionPhase, setIsSelectionPhase] = useState(false);
     const [name, setName] = useState('');
     const [gender, setGender] = useState('');
     const [message, setMessage] = useState('');
     const [isMusicPlaying, setIsMusicPlaying] = useState(true);
+
     const backgroundMusic = useRef(null);
     const clickSound = useRef(null);
 
     useEffect(() => {
-        backgroundMusic.current = new Audio('/sounds/Theme.mp3');
+        backgroundMusic.current = new Audio(AUDIO_CONFIG.SOUNDS.BACKGROUND_MUSIC);
         backgroundMusic.current.loop = true;
-        backgroundMusic.current.volume = 0.3;
+        backgroundMusic.current.volume = AUDIO_CONFIG.VOLUME.BACKGROUND;
 
-        clickSound.current = new Audio('/sounds/Click Button.mp3');
-        clickSound.current.volume = 0.7;
+        clickSound.current = new Audio(AUDIO_CONFIG.SOUNDS.CLICK_BUTTON);
+        clickSound.current.volume = AUDIO_CONFIG.VOLUME.CLICK;
     }, []);
 
     useEffect(() => {
@@ -28,6 +33,16 @@ const TrainerSetup = () => {
             });
         }
     }, [showStartModal]);
+
+    useEffect(() => {
+        // Limpiar los campos cuando cambia de jugador
+        if (currentPlayer === 2) {
+            setName('');
+            setGender('');
+            setMessage('');
+            setIsWaiting(false);
+        }
+    }, [currentPlayer]);
 
     const handleStartGame = () => {
         playClickSound();
@@ -77,7 +92,7 @@ const TrainerSetup = () => {
         setIsWaiting(true);
 
         try {
-            const response = await fetch('http://localhost:8080/api/trainers', {
+            const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.TRAINERS}`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -91,27 +106,35 @@ const TrainerSetup = () => {
             }
 
             const data = await response.json();
+            const newTrainers = [...trainers, data];
+            setTrainers(newTrainers);
             
             if (currentPlayer === 1) {
                 setMessage(`¡Bienvenid@, ${data.name}! Preparando Jugador 2...`);
                 
                 setTimeout(() => {
                     setCurrentPlayer(2);
-                }, 4000);
+                }, GAME_CONFIG.PLAYER_SETUP_DELAY);
             } else {
                 setMessage(`¡Bienvenid@, ${data.name}! Ambos jugadores están listos. La elección de Pokemons dará comienzo...`);
-                setIsWaiting(false); 
                 if (backgroundMusic.current) {
                     backgroundMusic.current.pause(); 
                     backgroundMusic.current.currentTime = 0;
                     setIsMusicPlaying(false);
                 }
+                setTimeout(() => {
+                    setIsSelectionPhase(true);
+                }, 3000);
             }
         } catch (error) {
             setMessage(`Error: ${error.message}`);
             setIsWaiting(false);
         }
     };
+
+    if (isSelectionPhase) {
+        return <PokemonSelection trainers={trainers} />;
+    }
 
     return (
         <>
