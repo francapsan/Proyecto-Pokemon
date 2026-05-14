@@ -117,11 +117,6 @@ const TrainerSetup = () => {
                 }, GAME_CONFIG.PLAYER_SETUP_DELAY);
             } else {
                 setMessage(`¡Bienvenid@, ${data.name}! Ambos jugadores están listos. La elección de Pokemons dará comienzo...`);
-                if (backgroundMusic.current) {
-                    backgroundMusic.current.pause(); 
-                    backgroundMusic.current.currentTime = 0;
-                    setIsMusicPlaying(false);
-                }
                 setTimeout(() => {
                     setIsSelectionPhase(true);
                 }, 3000);
@@ -133,7 +128,7 @@ const TrainerSetup = () => {
     };
 
     if (isSelectionPhase) {
-        return <PokemonSelection trainers={trainers} />;
+        return <PokemonSelection trainers={trainers} backgroundMusic={backgroundMusic.current} isMusicPlaying={isMusicPlaying} setIsMusicPlaying={setIsMusicPlaying} />;
     }
 
     return (
@@ -192,7 +187,12 @@ const TrainerSetup = () => {
                             </button>
                         </div>
                     </div>
-                    {message && <p className="message">{message}</p>}
+                    {message && (
+                        <p className="message">
+                            {message}
+                            {isWaiting && <img src="/gifs/carga.gif" alt="Cargando" className="loading-gif" />}
+                        </p>
+                    )}
                     
                     <button
                         className="start-btn"

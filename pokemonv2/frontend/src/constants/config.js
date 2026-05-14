@@ -14,7 +14,8 @@ export const AUDIO_CONFIG = {
     },
     VOLUME: {
         BACKGROUND: 0.3,
-        CLICK: 0.7
+        CLICK: 0.7,
+        SFX: 0.7
     }
 };
 

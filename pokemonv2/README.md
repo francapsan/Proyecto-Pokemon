@@ -22,7 +22,7 @@ Este proyecto es un simulador de batallas Pokémon que consta de un backend desa
 
 - **Backend**:
   - **Lenguaje**: Java 25 LTS (Long-Term Support through September 2029)
-  - **Framework**: Spring Boot 3.4.0
+  - **Framework**: Spring Boot 4.0.6
   - **Gestión de Dependencias**: Apache Maven 3.9+
   - **Testing (Entorno de desarrollo)**:
     - JUnit 5 (para tests unitarios)
@@ -41,7 +41,7 @@ Este proyecto es un simulador de batallas Pokémon que consta de un backend desa
 
 Asegúrate de tener instalado lo siguiente en tu sistema:
 - **Java Development Kit (JDK)** - Versión 25 LTS o superior (https://adoptium.net/)
-- **Apache Maven** - Versión 3.9.0 o superior (https://maven.apache.org/)
+- **Apache Maven** - Versión 4.05 o superior (https://maven.apache.org/)
 - **Node.js** (incluye npm) - Versión LTS recomendada (https://nodejs.org/)
 - **Yarn** (opcional, alternativa a npm) - Para gestionar paquetes del frontend (https://yarnpkg.com/)
 

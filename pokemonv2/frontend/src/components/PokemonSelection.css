@@ -169,3 +169,39 @@
     border: 1px solid #ced4da;
     border-radius: 10px;
 }
+
+/* Loading Container Styles */
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    width: 100%;
+}
+
+.loading-text {
+    font-size: 1.8rem;
+    color: #3b4cca;
+    font-weight: bold;
+    text-shadow: 2px 2px 0 #ffcb05;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+.loading-gif {
+    width: 40px;
+    height: 40px;
+    animation: bounce 0.8s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-8px);
+    }
+}

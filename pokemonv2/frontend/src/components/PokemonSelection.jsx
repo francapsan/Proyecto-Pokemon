@@ -10,43 +10,44 @@ const typeTranslations = {
     ELECTRIC: 'Eléctrico',
     NORMAL: 'Normal',
 };
-const PokemonSelection = ({ trainers }) => {
+const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, isMusicPlaying: sharedIsMusicPlaying, setIsMusicPlaying: setSharedIsMusicPlaying }) => {
     const [pokemons, setPokemons] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState(null);
     
     const [teams, setTeams] = useState({ 1: [], 2: [] });
     const [message, setMessage] = useState('');
-    const [isMusicPlaying, setIsMusicPlaying] = useState(true);
-    const backgroundMusic = useRef(null);
+    const [isMusicPlaying, setIsMusicPlaying] = useState(sharedIsMusicPlaying !== undefined ? sharedIsMusicPlaying : true);
+    const backgroundMusic = useRef(sharedBackgroundMusic);
 
     const player1Team = teams[1];
     const player2Team = teams[2];
     const p1IsFull = player1Team.length >= GAME_CONFIG.TEAM_SIZE;
     const p2IsFull = player2Team.length >= GAME_CONFIG.TEAM_SIZE;
 
-    // Determina de quién es el turno de forma declarativa
-    const whoseTurn = p1IsFull ? 2 : p2IsFull ? 1 : (player1Team.length <= player2Team.length ? 1 : 2);
+    // Determina de quién es el turno: Jugador 1 selecciona primero sus 3, luego Jugador 2
+    const whoseTurn = p1IsFull ? 2 : 1;
     const isSelectionOver = p1IsFull && p2IsFull;
 
     useEffect(() => {
-        backgroundMusic.current = new Audio(AUDIO_CONFIG.SOUNDS.BACKGROUND_MUSIC);
-        backgroundMusic.current.loop = true;
-        backgroundMusic.current.volume = AUDIO_CONFIG.VOLUME.BACKGROUND;
+        // Si no hay música compartida, crear una nueva instancia
+        if (!backgroundMusic.current) {
+            backgroundMusic.current = new Audio(AUDIO_CONFIG.SOUNDS.BACKGROUND_MUSIC);
+            backgroundMusic.current.loop = true;
+            backgroundMusic.current.volume = AUDIO_CONFIG.VOLUME.BACKGROUND;
 
-        backgroundMusic.current.play().catch(e => {
-            console.error("Error al iniciar la música de selección:", e);
-            setIsMusicPlaying(false);
-        });
-
-        // Limpia y detiene la música cuando el componente se desmonta
-        return () => {
-            if (backgroundMusic.current) {
-                backgroundMusic.current.pause();
-                backgroundMusic.current.currentTime = 0;
-            }
-        };
-    }, []);
+            backgroundMusic.current.play().catch(e => {
+                console.error("Error al iniciar la música de selección:", e);
+                setIsMusicPlaying(false);
+            });
+        }
+        // Si hay música compartida, asegurarse de que está tocando
+        else if (isMusicPlaying && backgroundMusic.current.paused) {
+            backgroundMusic.current.play().catch(e => {
+                console.error("Error al reanudar la música:", e);
+            });
+        }
+    }, [isMusicPlaying]);
 
     useEffect(() => {
         // De momento, solo estos 3 Pokémon estarán disponibles.
@@ -68,9 +69,9 @@ const PokemonSelection = ({ trainers }) => {
         if (isSelectionOver) {
             setMessage("¡Todos los equipos están listos! ¡Preparaos para la batalla!");
         } else if (whoseTurn === 1) {
-            setMessage(`Turno de ${p1Name}. Elige tu Pokémon (${player1Team.length}/${GAME_CONFIG.TEAM_SIZE})`);
+            setMessage(`${p1Name}: Elige tus 3 Pokémon (${player1Team.length}/${GAME_CONFIG.TEAM_SIZE})`);
         } else {
-            setMessage(`Turno de ${p2Name}. Elige tu Pokémon (${player2Team.length}/${GAME_CONFIG.TEAM_SIZE})`);
+            setMessage(`${p2Name}: Elige tus 3 Pokémon (${player2Team.length}/${GAME_CONFIG.TEAM_SIZE})`);
         }
     }, [whoseTurn, isSelectionOver, player1Team.length, player2Team.length, trainers]);
 
@@ -80,6 +81,14 @@ const PokemonSelection = ({ trainers }) => {
         const currentTeam = teams[whoseTurn];
         if (currentTeam.find(p => p.name === pokemon.name)) return;
 
+        // Reproducir el sonido del Pokémon
+        const pokemonSoundName = `Grito_de_${pokemon.name}`;
+        const audioElement = new Audio(`/sounds/${pokemonSoundName}.ogg`);
+        audioElement.volume = AUDIO_CONFIG.VOLUME.SFX || 0.7;
+        audioElement.play().catch(e => {
+            console.warn(`No se pudo reproducir el sonido para ${pokemon.name}:`, e);
+        });
+
         setTeams(prevTeams => ({
             ...prevTeams,
             [whoseTurn]: [...prevTeams[whoseTurn], pokemon]
@@ -87,17 +96,22 @@ const PokemonSelection = ({ trainers }) => {
     };
 
     const toggleBackgroundMusic = () => {
+        const setState = setSharedIsMusicPlaying || setIsMusicPlaying;
+        
         if (isMusicPlaying) {
             backgroundMusic.current.pause();
             setIsMusicPlaying(false);
+            setState(false);
         } else {
             backgroundMusic.current.play()
                 .then(() => { 
                     setIsMusicPlaying(true);
+                    setState(true);
                 })
                 .catch(e => { 
                     console.error("Error al reproducir la música de fondo:", e);
                     setIsMusicPlaying(false);
+                    setState(false);
                 });
         }
     };
@@ -122,7 +136,15 @@ const PokemonSelection = ({ trainers }) => {
         </div>
     );
 
-    if (isLoading) return <div className="loading">Cargando Pokémon...</div>;
+    if (isLoading) {
+        return (
+            <div className="pokemon-selection-container">
+                <div className="loading-container">
+                    <p className="loading-text">Cargando Pokémon... <img src="/gifs/carga.gif" alt="Cargando" className="loading-gif" /></p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="pokemon-selection-container">
