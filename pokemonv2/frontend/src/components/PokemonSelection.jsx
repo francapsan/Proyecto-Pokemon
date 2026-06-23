@@ -1,16 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './PokemonSelection.css';
 import { API_CONFIG, GAME_CONFIG, AUDIO_CONFIG } from '../constants/config';
+import { POKEMON_LIST } from '../constants/pokemons';
+import { TYPE_LABELS } from '../constants/typeChart';
 import BattleArena from './BattleArena';
-
-// Objeto para traducir los tipos de Pokémon al español
-const typeTranslations = {
-    FIRE: 'Fuego',
-    WATER: 'Agua',
-    PLANT: 'Planta',
-    ELECTRIC: 'Eléctrico',
-    NORMAL: 'Normal',
-};
 const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, isMusicPlaying: sharedIsMusicPlaying, setIsMusicPlaying: setSharedIsMusicPlaying }) => {
     const [pokemons, setPokemons] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -24,6 +17,11 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
     const [showBattle, setShowBattle] = useState(false);
     const backgroundMusic = useRef(sharedBackgroundMusic);
     const battleMusic = useRef(null);
+    // Flag para garantizar que la transición y el arranque de la música
+    // de combate solo se ejecuten UNA vez, aunque el componente siga
+    // montado tras renderizar <BattleArena />.
+    const transitionStartedRef = useRef(false);
+    const battleMusicStartedRef = useRef(false);
 
     const player1Team = teams[1];
     const player2Team = teams[2];
@@ -55,12 +53,15 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
     }, [isMusicPlaying]);
 
     useEffect(() => {
-        // De momento, solo estos 3 Pokémon estarán disponibles.
-        const availablePokemons = [
-            { name: 'Charizard', type: 'FIRE', hp: 78, speed: 100 },
-            { name: 'Blastoise', type: 'WATER', hp: 79, speed: 78 },
-            { name: 'Venusaur', type: 'PLANT', hp: 80, speed: 80 },
-        ];
+        // Lista de Pokémon disponibles tomada del catálogo central.
+        // Solo se persisten campos necesarios para la fase de selección;
+        // los ataques se resolverán en la BattleArena a partir del nombre.
+        const availablePokemons = POKEMON_LIST.map(p => ({
+            name: p.name,
+            type: p.type,
+            hp: p.hp,
+            speed: p.speed,
+        }));
         setPokemons(availablePokemons);
         setIsLoading(false);
     }, []);
@@ -81,10 +82,11 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
     }, [whoseTurn, isSelectionOver, player1Team.length, player2Team.length, trainers]);
 
     // Efecto para iniciar la transición cuando se completa la selección
+    // (solo una vez, aunque el componente se re-renderice)
     useEffect(() => {
-        if (isSelectionOver && !showTransition) {
+        if (isSelectionOver && !transitionStartedRef.current) {
+            transitionStartedRef.current = true;
             console.log('✅ Selección completa - esperando 3 segundos...');
-            // Esperar 3 segundos antes de mostrar la transición
             const initialWaitTimer = setTimeout(() => {
                 console.log('✅ Mostrando transición...');
                 setShowTransition(true);
@@ -93,11 +95,14 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
 
             return () => clearTimeout(initialWaitTimer);
         }
-    }, [isSelectionOver, showTransition]);
+    }, [isSelectionOver]);
 
     // Efecto para cambiar la música cuando aparece la transición
+    // (la música de combate solo se inicia una sola vez)
     useEffect(() => {
-        if (showTransition) {
+        if (showTransition && !battleMusicStartedRef.current) {
+            battleMusicStartedRef.current = true;
+
             // Pausar música de fondo inmediatamente
             if (backgroundMusic.current && !backgroundMusic.current.paused) {
                 backgroundMusic.current.pause();
@@ -263,7 +268,7 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
                         >
                             <img src={`/gifs/${pokemon.name.toLowerCase()}.gif`} alt={pokemon.name} />
                             <h4>{pokemon.name}</h4>
-                            <p>Tipo: {typeTranslations[pokemon.type] || pokemon.type}</p>
+                            <p>Tipo: {TYPE_LABELS[pokemon.type] || pokemon.type}</p>
                         </div>
                     );
                 })}

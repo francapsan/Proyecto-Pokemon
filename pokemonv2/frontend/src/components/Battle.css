@@ -94,6 +94,12 @@
     animation: damage-shake 0.4s ease-in-out;
 }
 
+/* Pokémon debilitado: se desvanece y cae fuera de pantalla */
+.pokemon-platform.is-fainting {
+    animation: faint 1.5s ease-in forwards;
+    pointer-events: none;
+}
+
 .pokemon-sprite {
     width: 200px;
     height: 200px;
@@ -219,6 +225,11 @@
     box-shadow: 0 0 15px #00BFFF;
 }
 
+.projectile.plant {
+    background: linear-gradient(135deg, #FFD700, #7CFC00);
+    box-shadow: 0 0 15px #ADFF2F;
+}
+
 .projectile.left-to-right {
     animation: projectile-right 0.8s ease-in;
 }
@@ -327,6 +338,24 @@
     }
 }
 
+@keyframes faint {
+    0% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+        filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+    }
+    40% {
+        opacity: 0.85;
+        transform: translateY(20px) scale(0.95);
+        filter: grayscale(0.4) brightness(0.85);
+    }
+    100% {
+        opacity: 0;
+        transform: translateY(120px) scale(0.7);
+        filter: grayscale(1) brightness(0.6);
+    }
+}
+
 /* --- BOTONES --- */
 .action-buttons {
     display: flex;
@@ -361,4 +390,238 @@
 
 .action-btn:active:not(:disabled) {
     transform: scale(0.95);
+}
+
+/* --- PANEL DE ATAQUES --- */
+.attack-panel {
+    position: fixed;
+    bottom: 20px;
+    width: 360px;
+    max-width: calc(100vw - 40px);
+    background-color: rgba(0, 0, 0, 0.85);
+    border: 3px solid #FFD700;
+    border-radius: 10px;
+    padding: 12px 14px;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    font-family: 'Press Start 2P', cursive;
+    color: #FFD700;
+    transition: left 0.35s ease, right 0.35s ease;
+}
+
+/* El panel se ancla al lado del Pokémon del jugador cuyo turno es */
+.attack-panel.attack-panel-left {
+    left: 20px;
+    right: auto;
+}
+
+.attack-panel.attack-panel-right {
+    right: 20px;
+    left: auto;
+}
+
+.attack-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.attack-panel-turn {
+    font-size: 0.65rem;
+    line-height: 1.2;
+    flex: 1;
+}
+
+.reset-btn {
+    padding: 6px 10px;
+    background-color: #3b4cca;
+    color: white;
+    border: 2px solid white;
+    border-radius: 5px;
+    font-family: inherit;
+    font-size: 0.55rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: transform 0.1s ease, background-color 0.2s ease;
+}
+
+.reset-btn:hover:not(:disabled) {
+    background-color: #5563d6;
+}
+
+.reset-btn:active:not(:disabled) {
+    transform: scale(0.95);
+}
+
+.reset-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.attack-buttons {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+}
+
+.attack-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 4px;
+    padding: 10px 12px;
+    border: 2px solid white;
+    color: white;
+    font-family: inherit;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: transform 0.1s ease, filter 0.2s ease, opacity 0.2s ease;
+    text-align: left;
+    min-height: 56px;
+    background-color: #555;
+}
+
+.attack-btn .attack-name {
+    font-size: 0.65rem;
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+
+.attack-btn .attack-meta {
+    font-size: 0.5rem;
+    opacity: 0.85;
+}
+
+.attack-btn:hover:not(:disabled) {
+    transform: scale(1.03);
+    filter: brightness(1.1);
+}
+
+.attack-btn:active:not(:disabled) {
+    transform: scale(0.97);
+}
+
+.attack-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.attack-btn.attack-type-fuego {
+    background: linear-gradient(135deg, #FF6B35, #C0392B);
+}
+
+.attack-btn.attack-type-agua {
+    background: linear-gradient(135deg, #3498DB, #1E5C8B);
+}
+
+.attack-btn.attack-type-planta {
+    background: linear-gradient(135deg, #58D68D, #1E8449);
+}
+
+.attack-btn.attack-type-normal {
+    background: linear-gradient(135deg, #95A5A6, #5D6D7E);
+}
+
+/* --- SELECTOR DE CAMBIO DE POKÉMON --- */
+.switch-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.switch-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border: 2px solid white;
+    color: white;
+    font-family: inherit;
+    cursor: pointer;
+    border-radius: 6px;
+    transition: transform 0.1s ease, filter 0.2s ease, opacity 0.2s ease;
+    text-align: left;
+    background-color: #555;
+}
+
+.switch-option:hover:not(:disabled) {
+    transform: scale(1.02);
+    filter: brightness(1.1);
+}
+
+.switch-option:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.switch-option:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.switch-option-sprite {
+    width: 48px;
+    height: 48px;
+    object-fit: contain;
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.switch-option-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.switch-option .attack-name {
+    font-size: 0.65rem;
+    line-height: 1.1;
+    text-transform: uppercase;
+}
+
+.switch-option .attack-meta {
+    font-size: 0.5rem;
+    opacity: 0.85;
+}
+
+/* Reutiliza los colores de tipo de los ataques también para el selector */
+.switch-option.attack-type-fuego {
+    background: linear-gradient(135deg, #FF6B35, #C0392B);
+}
+
+.switch-option.attack-type-agua {
+    background: linear-gradient(135deg, #3498DB, #1E5C8B);
+}
+
+.switch-option.attack-type-planta {
+    background: linear-gradient(135deg, #58D68D, #1E8449);
+}
+
+.switch-option.attack-type-normal {
+    background: linear-gradient(135deg, #95A5A6, #5D6D7E);
+}
+
+/* Hacemos hueco al panel de ataques en la arena */
+.battle-arena {
+    padding-bottom: 220px;
+}
+
+@media (max-width: 720px) {
+    /* En pantallas pequeñas no hay sitio para anclar a cada lado:
+       centramos el panel en horizontal, conservando el efecto de "abajo". */
+    .attack-panel.attack-panel-left,
+    .attack-panel.attack-panel-right {
+        left: 50%;
+        right: auto;
+        transform: translateX(-50%);
+        width: calc(100vw - 24px);
+    }
+
+    .dialog-box {
+        bottom: 240px;
+    }
 }

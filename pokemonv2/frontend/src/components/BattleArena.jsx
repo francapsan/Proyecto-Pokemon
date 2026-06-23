@@ -1,5 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import './Battle.css';
+import { AUDIO_CONFIG } from '../constants/config';
+import { POKEMON_CATALOG } from '../constants/pokemons';
+import { getTypeMultiplier, getEffectivenessMessage, POKEMON_TYPES } from '../constants/typeChart';
 
 // --- SUB-COMPONENTE: Barra de Vida ---
 const HealthBar = ({ currentHp, maxHp, name }) => {
@@ -32,7 +35,7 @@ const TypewriterText = ({ text, speed = 40 }) => {
             return;
         }
 
-        setDisplayedText(''); // Reinicia el texto al cambiar el prop
+        setDisplayedText('');
         let i = 0;
         const intervalId = setInterval(() => {
             if (i <= text.length) {
@@ -49,135 +52,324 @@ const TypewriterText = ({ text, speed = 40 }) => {
     return <p>{displayedText}</p>;
 };
 
+// Construye el estado inicial de un Pokémon a partir de su nombre,
+// resolviendo type, speed, ataques y sprite desde el catálogo.
+const buildPokemonState = (basePokemon, fallbackName) => {
+    const data = POKEMON_CATALOG[basePokemon?.name] || POKEMON_CATALOG[fallbackName];
+    return {
+        name: data.name,
+        type: data.type,
+        speed: data.speed,
+        attacks: data.attacks,
+        hp: data.hp,
+        maxHp: data.hp,
+        sprite: `/gifs/${data.name.toLowerCase()}.gif`,
+    };
+};
+
+// Construye un equipo completo (array de estados de Pokémon).
+// Se usa para mantener el HP residual de cada Pokémon entre cambios.
+const buildTeam = (teamArr, fallbackName) => {
+    const source = (Array.isArray(teamArr) && teamArr.length > 0)
+        ? teamArr
+        : [{ name: fallbackName }];
+    return source.map(p => buildPokemonState(p, fallbackName));
+};
+
+// Mapeo de tipo del ataque a clase CSS del proyectil.
+// Los ataques NORMAL son cuerpo a cuerpo (sin proyectil).
+const PROJECTILE_TYPE_TO_CLASS = {
+    [POKEMON_TYPES.FUEGO]: 'fire',
+    [POKEMON_TYPES.AGUA]: 'water',
+    [POKEMON_TYPES.PLANTA]: 'plant',
+};
+
 // --- COMPONENTE PRINCIPAL: Arena de Combate ---
 const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = null }) => {
-    // --- ESTADO DE LOS POKÉMON ---
-    const [player1Pokemon, setPlayer1Pokemon] = useState({
-        name: teams[1]?.[0]?.name || 'Charizard',
-        hp: teams[1]?.[0]?.hp || 78,
-        maxHp: teams[1]?.[0]?.hp || 78,
-        sprite: `/gifs/${(teams[1]?.[0]?.name || 'charizard').toLowerCase()}.gif`,
-    });
+    // --- EQUIPOS COMPLETOS (mantienen HP residual de cada Pokémon) ---
+    const [player1Team, setPlayer1Team] = useState(() => buildTeam(teams[1], 'Charizard'));
+    const [player2Team, setPlayer2Team] = useState(() => buildTeam(teams[2], 'Blastoise'));
 
-    const [player2Pokemon, setPlayer2Pokemon] = useState({
-        name: teams[2]?.[0]?.name || 'Blastoise',
-        hp: teams[2]?.[0]?.hp || 79,
-        maxHp: teams[2]?.[0]?.hp || 79,
-        sprite: `/gifs/${(teams[2]?.[0]?.name || 'blastoise').toLowerCase()}.gif`,
+    // --- ÍNDICE DEL POKÉMON ACTIVO DE CADA EQUIPO ---
+    const [player1Index, setPlayer1Index] = useState(0);
+    const [player2Index, setPlayer2Index] = useState(0);
+
+    // Activos derivados del equipo + índice
+    const player1Pokemon = player1Team[player1Index];
+    const player2Pokemon = player2Team[player2Index];
+
+    // --- TURNO ACTIVO: empieza el más rápido (a igual velocidad, jugador 1) ---
+    const [currentTurn, setCurrentTurn] = useState(() => {
+        const p1 = buildPokemonState(teams[1]?.[0], 'Charizard');
+        const p2 = buildPokemonState(teams[2]?.[0], 'Blastoise');
+        return p1.speed >= p2.speed ? 'player1' : 'player2';
     });
 
     // --- ESTADO DE LA INTERFAZ Y ANIMACIONES ---
     const [dialogMessage, setDialogMessage] = useState('¡Que comience la batalla!');
     const [isTurnInProgress, setIsTurnInProgress] = useState(false);
     const [isBattleMusicPlaying, setIsBattleMusicPlaying] = useState(true);
+    const [battleOver, setBattleOver] = useState(false);
+    // Cuando es true, el panel muestra la lista de Pokémon disponibles para cambiar
+    const [isSwitching, setIsSwitching] = useState(false);
 
-    // Estados para controlar las animaciones CSS
     const [animationState, setAnimationState] = useState({
-        attacking: null, // 'player1' o 'player2'
-        takingDamage: null, // 'player1' o 'player2'
-        projectile: null, // { type, direction }
-        arenaEffect: null, // 'earthquake'
+        attacking: null,
+        takingDamage: null,
+        projectile: null,
+        arenaEffect: null,
+        fainting: null,
     });
 
-    // Función de utilidad para crear pausas
     const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
-    // Función para controlar la música de combate
-    const toggleBattleMusic = () => {
-        if (battleMusic) {
-            if (isBattleMusicPlaying) {
-                battleMusic.pause();
-                setIsBattleMusicPlaying(false);
-            } else {
-                battleMusic.play().catch(e => console.error("Error al reproducir música:", e));
-                setIsBattleMusicPlaying(true);
-            }
+    // Reproduce el grito de un Pokémon
+    const playPokemonCry = (pokemonName) => {
+        if (!pokemonName) return;
+        try {
+            const cry = new Audio(`/sounds/Grito_de_${pokemonName}.ogg`);
+            cry.volume = AUDIO_CONFIG.VOLUME?.SFX ?? 0.7;
+            cry.play().catch(e => {
+                console.warn(`No se pudo reproducir el grito de ${pokemonName}:`, e);
+            });
+        } catch (e) {
+            console.warn(`Error inicializando el grito de ${pokemonName}:`, e);
         }
     };
 
-    // --- ORQUESTACIÓN DEL TURNO ---
-    const executeTurn = useCallback(async (turnData) => {
-        if (isTurnInProgress) return;
+    const getTrainerName = (playerId) => {
+        const idx = playerId === 'player1' ? 0 : 1;
+        return trainers[idx]?.name || `Jugador ${idx + 1}`;
+    };
+
+    // Mensaje "¿Qué hará X?" cuando empieza un turno
+    useEffect(() => {
+        if (!battleOver && !isTurnInProgress && !isSwitching) {
+            setDialogMessage(`¿Qué hará ${getTrainerName(currentTurn)}?`);
+        }
+        // Dependencias intencionalmente acotadas.
+        // No queremos pisar el diálogo durante una animación.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [currentTurn, battleOver]);
+
+    // Música de combate
+    const toggleBattleMusic = () => {
+        if (!battleMusic) return;
+        if (isBattleMusicPlaying) {
+            battleMusic.pause();
+            setIsBattleMusicPlaying(false);
+        } else {
+            battleMusic.play().catch(e => console.error("Error al reproducir música:", e));
+            setIsBattleMusicPlaying(true);
+        }
+    };
+
+    // Helpers para actualizar el HP de un Pokémon concreto del equipo
+    const updateTeamHp = (playerId, index, newHp) => {
+        const setter = playerId === 'player1' ? setPlayer1Team : setPlayer2Team;
+        setter(prev => prev.map((p, i) => (i === index ? { ...p, hp: newHp } : p)));
+    };
+
+    // --- GESTIÓN DEL POKÉMON DEBILITADO ---
+    // Devuelve true si la batalla terminó (no quedan más Pokémon vivos).
+    const handleFaint = useCallback(async (defenderId) => {
+        const isP1 = defenderId === 'player1';
+        const team = isP1 ? player1Team : player2Team;
+        const currentIndex = isP1 ? player1Index : player2Index;
+        const defenderPokemon = team[currentIndex];
+        const ownerName = getTrainerName(defenderId);
+
+        // 1. Sonido + mensaje + animación de fainting
+        playPokemonCry(defenderPokemon.name);
+        setDialogMessage(`¡${defenderPokemon.name} se ha debilitado!`);
+        setAnimationState({
+            attacking: null,
+            takingDamage: null,
+            projectile: null,
+            arenaEffect: null,
+            fainting: defenderId,
+        });
+        await delay(1600);
+
+        // 2. Buscar siguiente Pokémon vivo (puede no ser el inmediatamente siguiente
+        // si el jugador ya había hecho cambios previamente)
+        const nextIndex = team.findIndex((p, i) => i !== currentIndex && p.hp > 0);
+        if (nextIndex === -1) {
+            const winnerName = getTrainerName(isP1 ? 'player2' : 'player1');
+            setDialogMessage(`¡${winnerName} ha ganado la batalla!`);
+            setBattleOver(true);
+            return true;
+        }
+
+        // 3. Cargar el siguiente Pokémon disponible
+        const nextPokemon = team[nextIndex];
+        if (isP1) {
+            setPlayer1Index(nextIndex);
+        } else {
+            setPlayer2Index(nextIndex);
+        }
+
+        setAnimationState({
+            attacking: null,
+            takingDamage: null,
+            projectile: null,
+            arenaEffect: null,
+            fainting: null,
+        });
+        setDialogMessage(`¡${ownerName} envía a ${nextPokemon.name}!`);
+        await delay(1500);
+        return false;
+    }, [player1Team, player2Team, player1Index, player2Index, trainers]);
+
+    // --- EJECUCIÓN DE UN ATAQUE ELEGIDO POR EL JUGADOR ACTIVO ---
+    const executeAttack = useCallback(async (attack) => {
+        if (isTurnInProgress || battleOver) return;
         setIsTurnInProgress(true);
 
-        const { attacker, defender, attack, effectiveness, damage, defenderHpLeft } = turnData;
+        const isP1Attacking = currentTurn === 'player1';
+        const attacker = isP1Attacking ? player1Pokemon : player2Pokemon;
+        const defender = isP1Attacking ? player2Pokemon : player1Pokemon;
+        const attackerId = currentTurn;
+        const defenderId = isP1Attacking ? 'player2' : 'player1';
+        const defenderIndex = isP1Attacking ? player2Index : player1Index;
+
+        // Cálculo de daño según la tabla de tipos
+        const multiplier = getTypeMultiplier(attack.type, defender.type);
+        const finalDamage = Math.floor(attack.damage * multiplier);
+        const newHp = Math.max(0, defender.hp - finalDamage);
+        const effectivenessMsg = getEffectivenessMessage(multiplier);
 
         // 1. Anunciar el ataque
         setDialogMessage(`¡${attacker.name} usó ${attack.name}!`);
-        await delay(1800);
+        await delay(1500);
 
-        // 2. Iniciar animación de ataque (y proyectil si existe)
+        // 2. Animación de ataque (+ proyectil si aplica)
+        const projectileClass = PROJECTILE_TYPE_TO_CLASS[attack.type] || null;
         setAnimationState(prev => ({
             ...prev,
-            attacking: attacker.id,
-            projectile: attack.isProjectile ? {
-                type: attack.type.toLowerCase(), // 'fire' -> 'flamethrower'
-                direction: attacker.id === 'player1' ? 'left-to-right' : 'right-to-left'
-            } : null
+            attacking: attackerId,
+            projectile: projectileClass ? {
+                type: projectileClass,
+                direction: attackerId === 'player1' ? 'left-to-right' : 'right-to-left',
+            } : null,
         }));
-
-        // Esperar a que el proyectil viaje (o la embestida termine)
         await delay(1000);
 
-        // 3. Iniciar animación de daño y actualizar vida
+        // 3. Aplicar daño y animar al defensor
         setAnimationState(prev => ({
             ...prev,
-            projectile: null, // Ocultar proyectil al impactar
-            takingDamage: defender.id
+            projectile: null,
+            takingDamage: defenderId,
         }));
-
-        if (defender.id === 'player1') {
-            setPlayer1Pokemon(p => ({ ...p, hp: Math.max(0, defenderHpLeft) }));
-        } else {
-            setPlayer2Pokemon(p => ({ ...p, hp: Math.max(0, defenderHpLeft) }));
-        }
-
-        // Esperar a que la animación de daño termine
+        updateTeamHp(defenderId, defenderIndex, newHp);
         await delay(800);
 
-        // 4. Anunciar efectividad (si la hay)
-        if (effectiveness) {
-            setDialogMessage(effectiveness);
+        // 4. Mensaje de efectividad
+        if (effectivenessMsg) {
+            setDialogMessage(effectivenessMsg);
             await delay(1500);
         }
 
-        // 5. Limpiar estados y finalizar turno
-        setAnimationState({ attacking: null, takingDamage: null, projectile: null, arenaEffect: null });
-        setDialogMessage('Esperando el próximo movimiento...');
+        // 5. ¿KO?
+        if (newHp <= 0) {
+            const finished = await handleFaint(defenderId);
+            if (!finished) {
+                setCurrentTurn(defenderId);
+            }
+        } else {
+            setAnimationState({
+                attacking: null,
+                takingDamage: null,
+                projectile: null,
+                arenaEffect: null,
+                fainting: null,
+            });
+            setCurrentTurn(defenderId);
+        }
+
         setIsTurnInProgress(false);
+    }, [isTurnInProgress, battleOver, currentTurn, player1Pokemon, player2Pokemon, player1Index, player2Index, handleFaint]);
 
-    }, [isTurnInProgress]);
-
-    // --- DATOS DE EJEMPLO Y CONTROLES PARA PRUEBAS ---
-    const mockTurn1 = {
-        attacker: { id: 'player1', name: player1Pokemon.name },
-        defender: { id: 'player2', name: player2Pokemon.name },
-        attack: { name: 'Lanzallamas', isProjectile: true, type: 'FIRE' },
-        effectiveness: '¡No es muy efectivo...',
-        damage: 20,
-        defenderHpLeft: player2Pokemon.hp - 20,
+    // --- CAMBIO DE POKÉMON (consume el turno) ---
+    const handleSwitchClick = () => {
+        if (isTurnInProgress || battleOver) return;
+        setIsSwitching(true);
+        setDialogMessage(`¿A qué Pokémon cambiará ${getTrainerName(currentTurn)}?`);
     };
 
-    const mockTurn2 = {
-        attacker: { id: 'player2', name: player2Pokemon.name },
-        defender: { id: 'player1', name: player1Pokemon.name },
-        attack: { name: 'Hidrobomba', isProjectile: true, type: 'WATER' },
-        effectiveness: '¡Es súper efectivo!',
-        damage: 40,
-        defenderHpLeft: player1Pokemon.hp - 40,
+    const handleSwitchCancel = () => {
+        setIsSwitching(false);
+        setDialogMessage(`¿Qué hará ${getTrainerName(currentTurn)}?`);
     };
 
-    // Clases CSS dinámicas para la arena y las plataformas
+    const performSwitch = useCallback(async (targetIndex) => {
+        if (isTurnInProgress || battleOver) return;
+
+        const isP1 = currentTurn === 'player1';
+        const team = isP1 ? player1Team : player2Team;
+        const currentIndex = isP1 ? player1Index : player2Index;
+
+        if (targetIndex === currentIndex) return;
+        const targetPokemon = team[targetIndex];
+        if (!targetPokemon || targetPokemon.hp <= 0) return;
+
+        setIsSwitching(false);
+        setIsTurnInProgress(true);
+
+        const outgoingPokemon = team[currentIndex];
+        const ownerName = getTrainerName(currentTurn);
+
+        // 1. Mensaje de retirada
+        setDialogMessage(`¡${ownerName} retira a ${outgoingPokemon.name}!`);
+        setAnimationState({
+            attacking: null,
+            takingDamage: null,
+            projectile: null,
+            arenaEffect: null,
+            fainting: currentTurn,
+        });
+        await delay(1200);
+
+        // 2. Actualizar índice activo (el equipo conserva el HP residual)
+        if (isP1) {
+            setPlayer1Index(targetIndex);
+        } else {
+            setPlayer2Index(targetIndex);
+        }
+
+        // 3. Anunciar al nuevo Pokémon
+        setAnimationState({
+            attacking: null,
+            takingDamage: null,
+            projectile: null,
+            arenaEffect: null,
+            fainting: null,
+        });
+        playPokemonCry(targetPokemon.name);
+        setDialogMessage(`¡Adelante, ${targetPokemon.name}!`);
+        await delay(1500);
+
+        // 4. El cambio consume el turno → pasa al rival
+        setCurrentTurn(isP1 ? 'player2' : 'player1');
+        setIsTurnInProgress(false);
+    }, [isTurnInProgress, battleOver, currentTurn, player1Team, player2Team, player1Index, player2Index, trainers]);
+
+    // --- CLASES DINÁMICAS ---
     const arenaClasses = `battle-arena ${animationState.arenaEffect ? `arena-${animationState.arenaEffect}` : ''}`;
-    const platform1Classes = `pokemon-platform left ${animationState.attacking === 'player1' ? 'is-attacking-left' : ''} ${animationState.takingDamage === 'player1' ? 'is-taking-damage' : ''}`;
-    const platform2Classes = `pokemon-platform right ${animationState.attacking === 'player2' ? 'is-attacking-right' : ''} ${animationState.takingDamage === 'player2' ? 'is-taking-damage' : ''}`;
+    const platform1Classes = `pokemon-platform left ${animationState.attacking === 'player1' ? 'is-attacking-left' : ''} ${animationState.takingDamage === 'player1' ? 'is-taking-damage' : ''} ${animationState.fainting === 'player1' ? 'is-fainting' : ''}`;
+    const platform2Classes = `pokemon-platform right ${animationState.attacking === 'player2' ? 'is-attacking-right' : ''} ${animationState.takingDamage === 'player2' ? 'is-taking-damage' : ''} ${animationState.fainting === 'player2' ? 'is-fainting' : ''}`;
 
-    // Mapeo de tipos a clases de proyectil
-    const projectileClassMap = {
-        fire: 'flamethrower',
-        water: 'hydro-pump',
-        // Añadir más si es necesario
-    };
+    const activeTeam = currentTurn === 'player1' ? player1Team : player2Team;
+    const activeIndex = currentTurn === 'player1' ? player1Index : player2Index;
+    const activeAttacker = activeTeam[activeIndex];
+
+    // Pokémon disponibles para cambiar: distintos del activo y con HP > 0
+    const switchableOptions = activeTeam
+        .map((p, idx) => ({ pokemon: p, index: idx }))
+        .filter(opt => opt.index !== activeIndex && opt.pokemon.hp > 0);
+
+    const canSwitch = switchableOptions.length > 0;
+    const showAttackPanel = !battleOver && !isTurnInProgress;
 
     return (
         <>
@@ -186,25 +378,8 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
                 {isBattleMusicPlaying ? '🔊' : '🔇'}
             </div>
 
-            {/* Controles de prueba para simular turnos */}
-            <div className="battle-controls">
-                <button onClick={() => executeTurn(mockTurn1)} disabled={isTurnInProgress}>
-                    Turno 1: Charizard ataca
-                </button>
-                <button onClick={() => executeTurn(mockTurn2)} disabled={isTurnInProgress}>
-                    Turno 2: Blastoise ataca
-                </button>
-                 <button onClick={() => {
-                    setPlayer1Pokemon(p => ({ ...p, hp: p.maxHp }));
-                    setPlayer2Pokemon(p => ({ ...p, hp: p.maxHp }));
-                    setDialogMessage('¡Combate reiniciado!');
-                }}>
-                    Reiniciar
-                </button>
-            </div>
-
             <div className={arenaClasses}>
-                {/* --- Recuadros de HP (posicionados arriba) --- */}
+                {/* Recuadros de HP */}
                 <div className="health-bar-container left">
                     <HealthBar
                         name={player1Pokemon.name}
@@ -220,9 +395,12 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
                     />
                 </div>
 
-                {/* --- Lado del Jugador 1 (Izquierda) --- */}
+                {/* Lado del Jugador 1 (Izquierda) */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', order: 1 }}>
-                    <div className={platform1Classes}>
+                    <div
+                        key={`p1-${player1Index}`}
+                        className={platform1Classes}
+                    >
                         <img
                             src={player1Pokemon.sprite}
                             alt={player1Pokemon.name}
@@ -232,20 +410,23 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
                     </div>
                 </div>
 
-                {/* --- Proyectil (renderizado condicional) --- */}
+                {/* Proyectil */}
                 {animationState.projectile && (
                     <div
                         className={`
                             projectile 
-                            ${projectileClassMap[animationState.projectile.type] || ''} 
+                            ${animationState.projectile.type || ''} 
                             ${animationState.projectile.direction}
                         `}
                     />
                 )}
 
-                {/* --- Lado del Jugador 2 (Derecha) --- */}
+                {/* Lado del Jugador 2 (Derecha) */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', order: 3 }}>
-                    <div className={platform2Classes}>
+                    <div
+                        key={`p2-${player2Index}`}
+                        className={platform2Classes}
+                    >
                         <img
                             src={player2Pokemon.sprite}
                             alt={player2Pokemon.name}
@@ -255,10 +436,83 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
                     </div>
                 </div>
 
-                {/* --- Caja de Diálogo --- */}
+                {/* Caja de Diálogo */}
                 <div className="dialog-box">
                     <TypewriterText text={dialogMessage} />
                 </div>
+            </div>
+
+            {/* Panel del Pokémon activo: ataques o selección de cambio */}
+            <div className={`attack-panel attack-panel-${currentTurn === 'player1' ? 'left' : 'right'}`}>
+                <div className="attack-panel-header">
+                    <span className="attack-panel-turn">
+                        Turno de {getTrainerName(currentTurn)} · {activeAttacker.name}
+                    </span>
+                    {!isSwitching ? (
+                        <button
+                            type="button"
+                            className="reset-btn"
+                            onClick={handleSwitchClick}
+                            disabled={isTurnInProgress || battleOver || !canSwitch}
+                            title={canSwitch ? 'Cambia tu Pokémon activo (consume el turno)' : 'No tienes más Pokémon disponibles'}
+                        >
+                            Cambiar
+                        </button>
+                    ) : (
+                        <button
+                            type="button"
+                            className="reset-btn"
+                            onClick={handleSwitchCancel}
+                            disabled={isTurnInProgress}
+                        >
+                            Volver
+                        </button>
+                    )}
+                </div>
+
+                {!isSwitching ? (
+                    <div className="attack-buttons">
+                        {activeAttacker.attacks.map((attack) => (
+                            <button
+                                key={attack.name}
+                                type="button"
+                                className={`attack-btn attack-type-${attack.type.toLowerCase()}`}
+                                onClick={() => executeAttack(attack)}
+                                disabled={!showAttackPanel}
+                                title={`Daño base: ${attack.damage} · Tipo: ${attack.type}`}
+                            >
+                                <span className="attack-name">{attack.name}</span>
+                                <span className="attack-meta">
+                                    {attack.type} · {attack.damage}
+                                </span>
+                            </button>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="switch-options">
+                        {switchableOptions.map(({ pokemon, index }) => (
+                            <button
+                                key={`${pokemon.name}-${index}`}
+                                type="button"
+                                className={`switch-option attack-type-${pokemon.type.toLowerCase()}`}
+                                onClick={() => performSwitch(index)}
+                                disabled={isTurnInProgress}
+                            >
+                                <img
+                                    src={pokemon.sprite}
+                                    alt={pokemon.name}
+                                    className="switch-option-sprite"
+                                />
+                                <div className="switch-option-info">
+                                    <span className="attack-name">{pokemon.name}</span>
+                                    <span className="attack-meta">
+                                        {pokemon.type} · HP {pokemon.hp}/{pokemon.maxHp}
+                                    </span>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                )}
             </div>
         </>
     );
