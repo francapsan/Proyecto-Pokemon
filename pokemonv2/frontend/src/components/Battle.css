@@ -1,0 +1,364 @@
+/* --- ESTILOS DE ARENA DE COMBATE --- */
+.battle-arena {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    font-family: 'Press Start 2P', cursive;
+    color: white;
+    position: relative;
+    overflow: hidden;
+    padding: 20px;
+    padding-bottom: 140px;
+    gap: 150px;
+}
+
+/* --- BOTÓN DE MÚSICA --- */
+.music-toggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    font-size: 2rem;
+    cursor: pointer;
+    z-index: 1000;
+    color: #3b4cca;
+    background-color: white;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
+    transition: transform 0.1s ease, background-color 0.2s ease;
+}
+
+.music-toggle:hover {
+    background-color: #e0f2fe;
+}
+
+.music-toggle:active {
+    transform: scale(0.95);
+}
+
+/* --- CONTENEDOR PRINCIPAL DE COMBATE --- */
+.battle-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    width: 100%;
+    height: 80vh;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+    position: relative;
+}
+
+/* --- PLATAFORMAS DE POKÉMON --- */
+.pokemon-platform {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    width: 280px;
+    height: 300px;
+    position: relative;
+    margin-top: 0;
+}
+
+.pokemon-platform.left {
+    animation: slide-in-left 0.5s ease-out;
+    order: 1;
+}
+
+.pokemon-platform.right {
+    animation: slide-in-right 0.5s ease-out;
+    order: 3;
+}
+
+.pokemon-platform.left.is-attacking-left {
+    animation: attack-left 0.6s ease-in-out;
+}
+
+.pokemon-platform.right.is-attacking-right {
+    animation: attack-right 0.6s ease-in-out;
+}
+
+.pokemon-platform.left.is-taking-damage {
+    animation: damage-shake 0.4s ease-in-out;
+}
+
+.pokemon-platform.right.is-taking-damage {
+    animation: damage-shake 0.4s ease-in-out;
+}
+
+.pokemon-sprite {
+    width: 200px;
+    height: 200px;
+    object-fit: contain;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
+}
+
+.pokemon-base {
+    width: 230px;
+    height: 20px;
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    border: 2px solid white;
+    position: relative;
+}
+
+/* --- BARRAS DE SALUD --- */
+.health-bar-container {
+    width: 250px;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border: 3px solid #FFD700;
+    border-radius: 5px;
+    margin-bottom: 10px;
+    position: absolute;
+    top: 20px;
+    z-index: 50;
+}
+
+.health-bar-container.left {
+    left: 20px;
+}
+
+.health-bar-container.right {
+    right: 20px;
+}
+
+.pokemon-name {
+    margin: 0 0 5px 0;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    color: #FFD700;
+}
+
+.health-bar {
+    width: 100%;
+    height: 20px;
+    background-color: #333;
+    border: 2px solid white;
+    border-radius: 3px;
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+
+.health-bar-inner {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.health-bar-inner.green {
+    background-color: #00FF00;
+}
+
+.health-bar-inner.yellow {
+    background-color: #FFD700;
+}
+
+.health-bar-inner.red {
+    background-color: #FF0000;
+}
+
+.hp-text {
+    margin: 0;
+    font-size: 0.7rem;
+    text-align: center;
+    color: white;
+}
+
+/* --- CAJA DE DIÁLOGO --- */
+.dialog-box {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80%;
+    max-width: 600px;
+    background-color: rgba(0, 0, 0, 0.8);
+    border: 3px solid #FFD700;
+    border-radius: 10px;
+    padding: 20px;
+    color: #FFD700;
+    font-size: 0.9rem;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    z-index: 100;
+}
+
+.dialog-box p {
+    margin: 0;
+}
+
+/* --- PROYECTILES --- */
+.projectile {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    bottom: 150px;
+    z-index: 10;
+}
+
+.projectile.fire {
+    background: linear-gradient(135deg, #FF4500, #FFD700);
+    box-shadow: 0 0 15px #FF4500;
+}
+
+.projectile.water {
+    background: linear-gradient(135deg, #00BFFF, #1E90FF);
+    box-shadow: 0 0 15px #00BFFF;
+}
+
+.projectile.left-to-right {
+    animation: projectile-right 0.8s ease-in;
+}
+
+.projectile.right-to-left {
+    animation: projectile-left 0.8s ease-in;
+}
+
+/* --- EFECTOS DE ARENA --- */
+.arena-effect {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+}
+
+.arena-effect.earthquake {
+    animation: earthquake 0.6s ease-in-out;
+}
+
+/* --- ANIMACIONES --- */
+@keyframes slide-in-left {
+    from {
+        opacity: 0;
+        transform: translateX(-100px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes slide-in-right {
+    from {
+        opacity: 0;
+        transform: translateX(100px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes attack-left {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    50% {
+        transform: translateX(40px);
+    }
+}
+
+@keyframes attack-right {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    50% {
+        transform: translateX(-40px);
+    }
+}
+
+@keyframes damage-shake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    10%, 30%, 50%, 70%, 90% {
+        transform: translateX(-5px);
+    }
+    20%, 40%, 60%, 80% {
+        transform: translateX(5px);
+    }
+}
+
+@keyframes projectile-right {
+    from {
+        left: 50px;
+        opacity: 1;
+    }
+    to {
+        right: 50px;
+        opacity: 0;
+    }
+}
+
+@keyframes projectile-left {
+    from {
+        right: 50px;
+        opacity: 1;
+    }
+    to {
+        left: 50px;
+        opacity: 0;
+    }
+}
+
+@keyframes earthquake {
+    0%, 100% {
+        transform: translateX(0);
+    }
+    25% {
+        transform: translateX(-5px);
+    }
+    75% {
+        transform: translateX(5px);
+    }
+}
+
+/* --- BOTONES --- */
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    padding: 10px 20px;
+    background-color: #667eea;
+    border: 2px solid white;
+    color: white;
+    font-family: 'Press Start 2P', cursive;
+    font-size: 0.7rem;
+    cursor: pointer;
+    border-radius: 5px;
+    transition: all 0.2s ease;
+    text-transform: uppercase;
+}
+
+.action-btn:hover:not(:disabled) {
+    background-color: #764ba2;
+    transform: scale(1.05);
+}
+
+.action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.action-btn:active:not(:disabled) {
+    transform: scale(0.95);
+}

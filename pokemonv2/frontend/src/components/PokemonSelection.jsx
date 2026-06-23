@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './PokemonSelection.css';
 import { API_CONFIG, GAME_CONFIG, AUDIO_CONFIG } from '../constants/config';
+import BattleArena from './BattleArena';
 
 // Objeto para traducir los tipos de Pokémon al español
 const typeTranslations = {
@@ -17,8 +18,12 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
     
     const [teams, setTeams] = useState({ 1: [], 2: [] });
     const [message, setMessage] = useState('');
-    const [isMusicPlaying, setIsMusicPlaying] = useState(sharedIsMusicPlaying !== undefined ? sharedIsMusicPlaying : true);
+    const [isMusicPlaying, setIsMusicPlaying] = useState(sharedIsMusicPlaying !== undefined ? sharedIsMusicPlaying : true);    
+    const [showTransition, setShowTransition] = useState(false);
+    const [transitionStartTime, setTransitionStartTime] = useState(null);
+    const [showBattle, setShowBattle] = useState(false);
     const backgroundMusic = useRef(sharedBackgroundMusic);
+    const battleMusic = useRef(null);
 
     const player1Team = teams[1];
     const player2Team = teams[2];
@@ -74,6 +79,60 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
             setMessage(`${p2Name}: Elige tus 3 Pokémon (${player2Team.length}/${GAME_CONFIG.TEAM_SIZE})`);
         }
     }, [whoseTurn, isSelectionOver, player1Team.length, player2Team.length, trainers]);
+
+    // Efecto para iniciar la transición cuando se completa la selección
+    useEffect(() => {
+        if (isSelectionOver && !showTransition) {
+            console.log('✅ Selección completa - esperando 3 segundos...');
+            // Esperar 3 segundos antes de mostrar la transición
+            const initialWaitTimer = setTimeout(() => {
+                console.log('✅ Mostrando transición...');
+                setShowTransition(true);
+                setTransitionStartTime(Date.now());
+            }, 3000);
+
+            return () => clearTimeout(initialWaitTimer);
+        }
+    }, [isSelectionOver, showTransition]);
+
+    // Efecto para cambiar la música cuando aparece la transición
+    useEffect(() => {
+        if (showTransition) {
+            // Pausar música de fondo inmediatamente
+            if (backgroundMusic.current && !backgroundMusic.current.paused) {
+                backgroundMusic.current.pause();
+                setIsMusicPlaying(false);
+                if (setSharedIsMusicPlaying) {
+                    setSharedIsMusicPlaying(false);
+                }
+            }
+
+            // Reproducir música de combate
+            if (!battleMusic.current) {
+                battleMusic.current = new Audio(AUDIO_CONFIG.SOUNDS.BATTLE_MUSIC);
+                battleMusic.current.volume = AUDIO_CONFIG.VOLUME.BACKGROUND;
+                battleMusic.current.loop = true;
+            }
+
+            battleMusic.current.play().catch(e => {
+                console.error("Error al reproducir la música de combate:", e);
+            });
+        }
+    }, [showTransition]);
+
+    // Efecto para controlar la duración de la transición (3 segundos)
+    useEffect(() => {
+        if (showTransition && transitionStartTime) {
+            const transitionDuration = 3000; // 3 segundos
+            const timer = setTimeout(() => {
+                console.log('✅ Ocultando transición - mostrando BattleArena...');
+                setShowTransition(false);
+                setShowBattle(true);
+            }, transitionDuration);
+
+            return () => clearTimeout(timer);
+        }
+    }, [showTransition, transitionStartTime]);
 
     const handlePokemonSelect = (pokemon) => {
         if (isSelectionOver) return;
@@ -146,8 +205,24 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
         );
     }
 
+    if (showBattle) {
+        console.log('🎮 BattleArena renderizado con:', { trainers, teams });
+        return (
+            <BattleArena 
+                trainers={trainers} 
+                teams={teams} 
+                battleMusic={battleMusic.current} 
+            />
+        );
+    }
+
     return (
         <div className="pokemon-selection-container">
+            {showTransition && (
+                <div className="transition-overlay">
+                    <img src="/gifs/transicion.gif" alt="Transición" className="transition-image" />
+                </div>
+            )}
             <div className="music-toggle" onClick={toggleBackgroundMusic}>
                 {isMusicPlaying ? '🔊' : '🔇'}
             </div>

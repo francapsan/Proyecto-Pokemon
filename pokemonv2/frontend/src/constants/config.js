@@ -10,7 +10,8 @@ export const API_CONFIG = {
 export const AUDIO_CONFIG = {
     SOUNDS: {
         BACKGROUND_MUSIC: '/sounds/Theme.mp3',
-        CLICK_BUTTON: '/sounds/Click Button.mp3'
+        CLICK_BUTTON: '/sounds/Click Button.mp3',
+        BATTLE_MUSIC: '/sounds/combate.m4a'
     },
     VOLUME: {
         BACKGROUND: 0.3,
