@@ -13,15 +13,15 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
     const [message, setMessage] = useState('');
     const [isMusicPlaying, setIsMusicPlaying] = useState(sharedIsMusicPlaying !== undefined ? sharedIsMusicPlaying : true);    
     const [showTransition, setShowTransition] = useState(false);
-    const [transitionStartTime, setTransitionStartTime] = useState(null);
     const [showBattle, setShowBattle] = useState(false);
     const backgroundMusic = useRef(sharedBackgroundMusic);
     const battleMusic = useRef(null);
-    // Flag para garantizar que la transición y el arranque de la música
-    // de combate solo se ejecuten UNA vez, aunque el componente siga
-    // montado tras renderizar <BattleArena />.
+    const transitionVideoRef = useRef(null);
+    // Flags para garantizar que cada paso de la transición solo se ejecuta
+    // una vez, aunque el componente siga montado tras renderizar <BattleArena />.
     const transitionStartedRef = useRef(false);
     const battleMusicStartedRef = useRef(false);
+    const transitionFinishedRef = useRef(false);
 
     const player1Team = teams[1];
     const player2Team = teams[2];
@@ -88,56 +88,50 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
             transitionStartedRef.current = true;
             console.log('✅ Selección completa - esperando 3 segundos...');
             const initialWaitTimer = setTimeout(() => {
-                console.log('✅ Mostrando transición...');
+                console.log('✅ Mostrando vídeo de entrada...');
                 setShowTransition(true);
-                setTransitionStartTime(Date.now());
             }, 3000);
 
             return () => clearTimeout(initialWaitTimer);
         }
     }, [isSelectionOver]);
 
-    // Efecto para cambiar la música cuando aparece la transición
-    // (la música de combate solo se inicia una sola vez)
+    // Cuando aparece el vídeo de transición:
+    //   - Pausamos la música de fondo (el .mp4 tiene su propio audio).
+    //   - NO arrancamos la música de combate todavía: lo hará handleTransitionEnd
+    //     cuando el .mp4 termine para que no se solapen audios.
     useEffect(() => {
-        if (showTransition && !battleMusicStartedRef.current) {
-            battleMusicStartedRef.current = true;
-
-            // Pausar música de fondo inmediatamente
-            if (backgroundMusic.current && !backgroundMusic.current.paused) {
-                backgroundMusic.current.pause();
-                setIsMusicPlaying(false);
-                if (setSharedIsMusicPlaying) {
-                    setSharedIsMusicPlaying(false);
-                }
+        if (showTransition && backgroundMusic.current && !backgroundMusic.current.paused) {
+            backgroundMusic.current.pause();
+            setIsMusicPlaying(false);
+            if (setSharedIsMusicPlaying) {
+                setSharedIsMusicPlaying(false);
             }
+        }
+    }, [showTransition]);
 
-            // Reproducir música de combate
+    // Se dispara cuando termina el vídeo de entrada (o el fallback de seguridad).
+    // Arranca la música de combate y muestra la arena.
+    const handleTransitionEnd = () => {
+        if (transitionFinishedRef.current) return;
+        transitionFinishedRef.current = true;
+
+        if (!battleMusicStartedRef.current) {
+            battleMusicStartedRef.current = true;
             if (!battleMusic.current) {
                 battleMusic.current = new Audio(AUDIO_CONFIG.SOUNDS.BATTLE_MUSIC);
                 battleMusic.current.volume = AUDIO_CONFIG.VOLUME.BACKGROUND;
                 battleMusic.current.loop = true;
             }
-
             battleMusic.current.play().catch(e => {
                 console.error("Error al reproducir la música de combate:", e);
             });
         }
-    }, [showTransition]);
 
-    // Efecto para controlar la duración de la transición (3 segundos)
-    useEffect(() => {
-        if (showTransition && transitionStartTime) {
-            const transitionDuration = 3000; // 3 segundos
-            const timer = setTimeout(() => {
-                console.log('✅ Ocultando transición - mostrando BattleArena...');
-                setShowTransition(false);
-                setShowBattle(true);
-            }, transitionDuration);
-
-            return () => clearTimeout(timer);
-        }
-    }, [showTransition, transitionStartTime]);
+        console.log('✅ Vídeo de entrada terminado - mostrando BattleArena...');
+        setShowTransition(false);
+        setShowBattle(true);
+    };
 
     const handlePokemonSelect = (pokemon) => {
         if (isSelectionOver) return;
@@ -225,7 +219,18 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
         <div className="pokemon-selection-container">
             {showTransition && (
                 <div className="transition-overlay">
-                    <img src="/gifs/transicion.gif" alt="Transición" className="transition-image" />
+                    <video
+                        ref={transitionVideoRef}
+                        src="/gifs/entrada.mp4"
+                        className="transition-video"
+                        autoPlay
+                        playsInline
+                        onEnded={handleTransitionEnd}
+                        onError={(e) => {
+                            console.error('Error reproduciendo el vídeo de entrada:', e);
+                            handleTransitionEnd();
+                        }}
+                    />
                 </div>
             )}
             <div className="music-toggle" onClick={toggleBackgroundMusic}>

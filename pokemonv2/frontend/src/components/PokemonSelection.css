@@ -227,6 +227,13 @@
     object-fit: contain;
 }
 
+.transition-video {
+    width: 100vw;
+    height: 100vh;
+    object-fit: contain;
+    background-color: #000000;
+}
+
 @keyframes fadeIn {
     from {
         opacity: 0;

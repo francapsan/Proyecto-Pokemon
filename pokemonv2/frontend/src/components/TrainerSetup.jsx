@@ -109,14 +109,16 @@ const TrainerSetup = () => {
             const newTrainers = [...trainers, data];
             setTrainers(newTrainers);
             
+            const welcome = gender === 'chica' ? 'Bienvenida' : 'Bienvenido';
+
             if (currentPlayer === 1) {
-                setMessage(`¡Bienvenid@, ${data.name}! Preparando Jugador 2...`);
+                setMessage(`¡${welcome}, ${data.name}! Preparando Jugador 2...`);
                 
                 setTimeout(() => {
                     setCurrentPlayer(2);
                 }, GAME_CONFIG.PLAYER_SETUP_DELAY);
             } else {
-                setMessage(`¡Bienvenid@, ${data.name}! Ambos jugadores están listos. La elección de Pokemons dará comienzo...`);
+                setMessage(`¡${welcome}, ${data.name}! Ambos jugadores están listos. La elección de los Pokemon dará comienzo...`);
                 setTimeout(() => {
                     setIsSelectionPhase(true);
                 }, 3000);
@@ -136,8 +138,8 @@ const TrainerSetup = () => {
             {showStartModal && (
                 <div className="start-modal-overlay">
                     <div className="start-modal">
-                        <h1>--- CAMPEONATO POKÉMON ---</h1>
-                        <p>¡Bienvenido entrenador!</p>
+                        <h1>--- COMBATE POKÉMON ---</h1>
+                        <p>¡Bienvenidos entrenadores!</p>
                         <button className="start-button" onClick={handleStartGame}>
                             Comenzar
                         </button>
@@ -149,7 +151,7 @@ const TrainerSetup = () => {
             </div>
             <div className="trainer-setup-container">
                 <div className="trainer-setup-card">
-                    <h1 className="title">--- CAMPEONATO POKÉMON ---</h1>
+                    <h1 className="title">--- COMBATE POKÉMON ---</h1>
                     
                     <h2 className="player-turn-title">
                         Turno del Jugador {currentPlayer}

@@ -25,6 +25,28 @@ const HealthBar = ({ currentHp, maxHp, name }) => {
     );
 };
 
+// --- SUB-COMPONENTE: Cuadro pequeño con los Pokémon vivos del equipo ---
+const AliveIndicatorBox = ({ aliveCount }) => {
+    if (aliveCount <= 0) return null;
+    return (
+        <div
+            className="alive-indicator-box"
+            aria-label={`Pokémon disponibles: ${aliveCount}`}
+        >
+            <div className="alive-indicator">
+                {Array.from({ length: aliveCount }).map((_, idx) => (
+                    <img
+                        key={idx}
+                        src="/gifs/espera.gif"
+                        alt=""
+                        className="alive-indicator-icon"
+                    />
+                ))}
+            </div>
+        </div>
+    );
+};
+
 // --- SUB-COMPONENTE: Texto con efecto de máquina de escribir ---
 const TypewriterText = ({ text, speed = 40 }) => {
     const [displayedText, setDisplayedText] = useState('');
@@ -379,15 +401,19 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
             </div>
 
             <div className={arenaClasses}>
-                {/* Recuadros de HP */}
-                <div className="health-bar-container left">
+                {/* Recuadros de HP del Jugador 1 */}
+                <div className="health-bar-wrapper left">
+                    <AliveIndicatorBox aliveCount={player1Team.filter(p => p.hp > 0).length} />
                     <HealthBar
                         name={player1Pokemon.name}
                         currentHp={player1Pokemon.hp}
                         maxHp={player1Pokemon.maxHp}
                     />
                 </div>
-                <div className="health-bar-container right">
+
+                {/* Recuadros de HP del Jugador 2 */}
+                <div className="health-bar-wrapper right">
+                    <AliveIndicatorBox aliveCount={player2Team.filter(p => p.hp > 0).length} />
                     <HealthBar
                         name={player2Pokemon.name}
                         currentHp={player2Pokemon.hp}

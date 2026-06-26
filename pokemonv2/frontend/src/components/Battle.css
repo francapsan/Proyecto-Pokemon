@@ -118,24 +118,33 @@
 }
 
 /* --- BARRAS DE SALUD --- */
-.health-bar-container {
+/* Wrapper externo: solo se encarga de posicionar la columna (cuadro pequeño + cuadro grande). */
+.health-bar-wrapper {
     width: 250px;
+    position: absolute;
+    top: 20px;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.health-bar-wrapper.left {
+    left: 20px;
+}
+
+.health-bar-wrapper.right {
+    right: 20px;
+}
+
+/* Cuadro grande: HP + nombre del Pokémon activo */
+.health-bar-container {
+    width: 100%;
     padding: 10px;
     background-color: rgba(0, 0, 0, 0.5);
     border: 3px solid #FFD700;
     border-radius: 5px;
-    margin-bottom: 10px;
-    position: absolute;
-    top: 20px;
-    z-index: 50;
-}
-
-.health-bar-container.left {
-    left: 20px;
-}
-
-.health-bar-container.right {
-    right: 20px;
+    box-sizing: border-box;
 }
 
 .pokemon-name {
@@ -143,6 +152,32 @@
     font-size: 0.8rem;
     text-transform: uppercase;
     color: #FFD700;
+}
+
+/* Cuadro pequeño: aparece encima del cuadro grande y contiene los gifs
+   con los Pokémon vivos restantes del equipo. */
+.alive-indicator-box {
+    width: 100%;
+    padding: 6px 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    border: 3px solid #FFD700;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+
+.alive-indicator {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 22px;
+}
+
+.alive-indicator-icon {
+    width: 22px;
+    height: 22px;
+    object-fit: contain;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.5));
 }
 
 .health-bar {
