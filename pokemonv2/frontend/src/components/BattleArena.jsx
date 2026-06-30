@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './Battle.css';
 import { AUDIO_CONFIG } from '../constants/config';
 import { POKEMON_CATALOG } from '../constants/pokemons';
@@ -26,8 +26,8 @@ const HealthBar = ({ currentHp, maxHp, name }) => {
 };
 
 // --- SUB-COMPONENTE: Cuadro pequeño con los Pokémon vivos del equipo ---
-const AliveIndicatorBox = ({ aliveCount }) => {
-    if (aliveCount <= 0) return null;
+const AliveIndicatorBox = ({ aliveCount, trainerName }) => {
+    if (aliveCount <= 0 && !trainerName) return null;
     return (
         <div
             className="alive-indicator-box"
@@ -42,6 +42,11 @@ const AliveIndicatorBox = ({ aliveCount }) => {
                         className="alive-indicator-icon"
                     />
                 ))}
+                {trainerName && (
+                    <span className="trainer-label" title={trainerName}>
+                        {trainerName}
+                    </span>
+                )}
             </div>
         </div>
     );
@@ -129,11 +134,25 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
 
     // --- ESTADO DE LA INTERFAZ Y ANIMACIONES ---
     const [dialogMessage, setDialogMessage] = useState('¡Que comience la batalla!');
-    const [isTurnInProgress, setIsTurnInProgress] = useState(false);
+    // Bloqueado al principio: la intro de lanzamiento debe terminar antes de poder jugar.
+    const [isTurnInProgress, setIsTurnInProgress] = useState(true);
     const [isBattleMusicPlaying, setIsBattleMusicPlaying] = useState(true);
     const [battleOver, setBattleOver] = useState(false);
     // Cuando es true, el panel muestra la lista de Pokémon disponibles para cambiar
     const [isSwitching, setIsSwitching] = useState(false);
+
+    // Estado de la intro de lanzamiento (cada jugador "lanza" su primer Pokémon).
+    // p1Throwing/p2Throwing: muestra el gif de lanzamiento en ese lado.
+    // p1Shown/p2Shown:        el sprite del Pokémon ya es visible.
+    // started:                 la intro terminó y la batalla normal puede empezar.
+    const [introState, setIntroState] = useState({
+        p1Throwing: false,
+        p2Throwing: false,
+        p1Shown: false,
+        p2Shown: false,
+        started: false,
+    });
+    const introStartedRef = useRef(false);
 
     const [animationState, setAnimationState] = useState({
         attacking: null,
@@ -166,13 +185,52 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
 
     // Mensaje "¿Qué hará X?" cuando empieza un turno
     useEffect(() => {
-        if (!battleOver && !isTurnInProgress && !isSwitching) {
+        if (!battleOver && !isTurnInProgress && !isSwitching && introState.started) {
             setDialogMessage(`¿Qué hará ${getTrainerName(currentTurn)}?`);
         }
         // Dependencias intencionalmente acotadas.
         // No queremos pisar el diálogo durante una animación.
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentTurn, battleOver]);
+    }, [currentTurn, battleOver, introState.started]);
+
+    // --- INTRO DE LANZAMIENTO: cada jugador lanza su Pokémon antes de empezar ---
+    // (Sólo se ejecuta una vez al montar)
+    useEffect(() => {
+        if (introStartedRef.current) return;
+        introStartedRef.current = true;
+
+        const p1Name = trainers[0]?.name || 'Jugador 1';
+        const p2Name = trainers[1]?.name || 'Jugador 2';
+        const p1Pokemon = player1Team[0];
+        const p2Pokemon = player2Team[0];
+
+        (async () => {
+            await delay(1400);
+
+            // FASE 1: Lanzamiento del Jugador 1
+            setDialogMessage(`¡${p1Name} envía a ${p1Pokemon.name}!`);
+            setIntroState(s => ({ ...s, p1Throwing: true }));
+            // Tiempo suficiente para que el gif `lanzar.gif` se reproduzca completo
+            await delay(2200);
+            // Pokeball "se abre": ocultamos el gif y revelamos el Pokémon
+            setIntroState(s => ({ ...s, p1Throwing: false, p1Shown: true }));
+            playPokemonCry(p1Pokemon.name);
+            await delay(1100);
+
+            // FASE 2: Lanzamiento del Jugador 2
+            setDialogMessage(`¡${p2Name} envía a ${p2Pokemon.name}!`);
+            setIntroState(s => ({ ...s, p2Throwing: true }));
+            await delay(2200);
+            setIntroState(s => ({ ...s, p2Throwing: false, p2Shown: true }));
+            playPokemonCry(p2Pokemon.name);
+            await delay(1100);
+
+            // FASE 3: Intro completada → la batalla normal toma el control
+            setIntroState(s => ({ ...s, started: true }));
+            setIsTurnInProgress(false);
+        })();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     // Música de combate
     const toggleBattleMusic = () => {
@@ -392,6 +450,11 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
 
     const canSwitch = switchableOptions.length > 0;
     const showAttackPanel = !battleOver && !isTurnInProgress;
+    // El panel sólo aparece cuando le toca elegir acción al jugador activo:
+    // no durante la intro, ni durante animaciones de ataque/cambio/KO,
+    // ni una vez terminada la batalla. Se mantiene mientras isSwitching
+    // está activo para que el jugador pueda elegir al nuevo Pokémon.
+    const showPanel = introState.started && !battleOver && (!isTurnInProgress || isSwitching);
 
     return (
         <>
@@ -401,25 +464,35 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
             </div>
 
             <div className={arenaClasses}>
-                {/* Recuadros de HP del Jugador 1 */}
-                <div className="health-bar-wrapper left">
-                    <AliveIndicatorBox aliveCount={player1Team.filter(p => p.hp > 0).length} />
-                    <HealthBar
-                        name={player1Pokemon.name}
-                        currentHp={player1Pokemon.hp}
-                        maxHp={player1Pokemon.maxHp}
-                    />
-                </div>
+                {/* Recuadros de HP del Jugador 1 (sólo cuando el Pokémon ya está fuera) */}
+                {introState.p1Shown && (
+                    <div className="health-bar-wrapper left">
+                        <AliveIndicatorBox
+                            aliveCount={player1Team.filter(p => p.hp > 0).length}
+                            trainerName={getTrainerName('player1')}
+                        />
+                        <HealthBar
+                            name={player1Pokemon.name}
+                            currentHp={player1Pokemon.hp}
+                            maxHp={player1Pokemon.maxHp}
+                        />
+                    </div>
+                )}
 
-                {/* Recuadros de HP del Jugador 2 */}
-                <div className="health-bar-wrapper right">
-                    <AliveIndicatorBox aliveCount={player2Team.filter(p => p.hp > 0).length} />
-                    <HealthBar
-                        name={player2Pokemon.name}
-                        currentHp={player2Pokemon.hp}
-                        maxHp={player2Pokemon.maxHp}
-                    />
-                </div>
+                {/* Recuadros de HP del Jugador 2 (sólo cuando el Pokémon ya está fuera) */}
+                {introState.p2Shown && (
+                    <div className="health-bar-wrapper right">
+                        <AliveIndicatorBox
+                            aliveCount={player2Team.filter(p => p.hp > 0).length}
+                            trainerName={getTrainerName('player2')}
+                        />
+                        <HealthBar
+                            name={player2Pokemon.name}
+                            currentHp={player2Pokemon.hp}
+                            maxHp={player2Pokemon.maxHp}
+                        />
+                    </div>
+                )}
 
                 {/* Lado del Jugador 1 (Izquierda) */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', order: 1 }}>
@@ -427,11 +500,20 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
                         key={`p1-${player1Index}`}
                         className={platform1Classes}
                     >
-                        <img
-                            src={player1Pokemon.sprite}
-                            alt={player1Pokemon.name}
-                            className="pokemon-sprite"
-                        />
+                        {introState.p1Throwing && (
+                            <img
+                                src="/gifs/lanzar.gif"
+                                alt="Lanzando Pokémon"
+                                className="pokemon-sprite throwing-sprite"
+                            />
+                        )}
+                        {!introState.p1Throwing && (introState.p1Shown || introState.started) && (
+                            <img
+                                src={player1Pokemon.sprite}
+                                alt={player1Pokemon.name}
+                                className="pokemon-sprite"
+                            />
+                        )}
                         <div className="pokemon-base" />
                     </div>
                 </div>
@@ -453,11 +535,20 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
                         key={`p2-${player2Index}`}
                         className={platform2Classes}
                     >
-                        <img
-                            src={player2Pokemon.sprite}
-                            alt={player2Pokemon.name}
-                            className="pokemon-sprite"
-                        />
+                        {introState.p2Throwing && (
+                            <img
+                                src="/gifs/lanzar.gif"
+                                alt="Lanzando Pokémon"
+                                className="pokemon-sprite throwing-sprite"
+                            />
+                        )}
+                        {!introState.p2Throwing && (introState.p2Shown || introState.started) && (
+                            <img
+                                src={player2Pokemon.sprite}
+                                alt={player2Pokemon.name}
+                                className="pokemon-sprite"
+                            />
+                        )}
                         <div className="pokemon-base" />
                     </div>
                 </div>
@@ -468,7 +559,9 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
                 </div>
             </div>
 
-            {/* Panel del Pokémon activo: ataques o selección de cambio */}
+            {/* Panel del Pokémon activo: ataques o selección de cambio.
+                Sólo se muestra cuando le toca elegir acción al jugador activo. */}
+            {showPanel && (
             <div className={`attack-panel attack-panel-${currentTurn === 'player1' ? 'left' : 'right'}`}>
                 <div className="attack-panel-header">
                     <span className="attack-panel-turn">
@@ -540,6 +633,7 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
                     </div>
                 )}
             </div>
+            )}
         </>
     );
 };
