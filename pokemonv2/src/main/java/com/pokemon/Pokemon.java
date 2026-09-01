@@ -4,16 +4,22 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class Pokemon {
+
+    private static final Logger log = LoggerFactory.getLogger(Pokemon.class);
+
     private static final int MAX_ATTACKS = 3;
     private static final int MIN_STAT = 1;
-    
+
     private final String name;
     private final PokemonType type;
     private final int speed;
     private final int maxHp;
     private final List<Attack> attacks;
-    
+
     private int hp;
 
     public Pokemon(String name, PokemonType type, int hp, int speed) {
@@ -29,7 +35,7 @@ public class Pokemon {
         if (speed < MIN_STAT) {
             throw new IllegalArgumentException("La velocidad debe ser mayor a " + MIN_STAT);
         }
-        
+
         this.name = name;
         this.type = type;
         this.maxHp = hp;
@@ -55,19 +61,19 @@ public class Pokemon {
         if (attacker == null) {
             throw new IllegalArgumentException("El atacante no puede ser nulo");
         }
-        
+
         double multiplier = TypeChart.getMultiplier(enemyAttack.getType(), this.type);
 
         if (multiplier > 1.0) {
-            System.out.println("¡ES SÚPER EFECTIVO!");
+            log.info("¡ES SÚPER EFECTIVO!");
         } else if (multiplier < 1.0) {
-            System.out.println("No es muy efectivo...");
+            log.info("No es muy efectivo...");
         }
 
         int finalDamage = (int) (enemyAttack.getDamage() * multiplier);
         this.hp = Math.max(0, this.hp - finalDamage);
 
-        System.out.println("El " + this.name + " ha recibido " + finalDamage + " de daño. (HP restante: " + this.hp + ")");
+        log.info("El {} ha recibido {} de daño. (HP restante: {})", this.name, finalDamage, this.hp);
     }
 
     public String getName() { return name; }

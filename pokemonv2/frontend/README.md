@@ -2,16 +2,16 @@
 
 Frontend del simulador de batallas Pokémon. Implementa toda la experiencia de juego: configuración de los dos entrenadores, selección de equipos, vídeo de transición, intro de lanzamiento de Pokémon y arena de combate con animaciones, sonidos, panel de ataques por tipo y sistema de cambio.
 
-Construido sobre **React + Vite**. Consume el backend de Spring Boot para registrar a los entrenadores; toda la lógica de combate (turnos, daño, efectividad, KO, cambios) vive en el cliente.
+Construido sobre **React 19 + Vite 8**. Consume el backend de Spring Boot para registrar entrenadores y para obtener el catálogo de Pokémon; el motor de combate (turnos, daño, efectividad, KO, cambios) vive en el cliente.
 
 > Si buscas la documentación general del proyecto (backend + frontend, mecánicas, instalación), consulta el [README principal](../README.md).
 
 ---
 
-## 🚀 Arranque rápido
+## Arranque rápido
 
 Requisitos:
-- **Node.js LTS** (incluye npm)
+- **Node.js 20 LTS** o superior (incluye npm)
 
 ```sh
 npm install
@@ -34,7 +34,7 @@ VITE_API_URL=http://localhost:9090
 
 ---
 
-## 📜 Scripts disponibles
+## Scripts disponibles
 
 | Script | Acción |
 |---|---|
@@ -42,10 +42,13 @@ VITE_API_URL=http://localhost:9090
 | `npm run build` | Build de producción en `dist/` |
 | `npm run preview` | Sirve el build de producción para probarlo en local |
 | `npm run lint` | Ejecuta ESLint sobre `src/` |
+| `npm test` | Ejecuta la suite Vitest una vez (modo CI) |
+| `npm run test:watch` | Vitest en modo watch |
+| `npm run test:ui` | Vitest con interfaz gráfica |
 
 ---
 
-## 📂 Estructura
+## Estructura
 
 ```
 frontend/
@@ -76,37 +79,52 @@ frontend/
 │   │   └── Battle.css
 │   ├── constants/
 │   │   ├── config.js                      # API_CONFIG, AUDIO_CONFIG, GAME_CONFIG
-│   │   ├── pokemons.js                    # Catálogo (espejo de Main.java)
-│   │   └── typeChart.js                   # Tabla de tipos (espejo de TypeChart.java)
-│   ├── hooks/
-│   │   └── useAudio.js                    # Hook reutilizable de audio
+│   │   ├── pokemons.js                    # Catálogo fallback (offline)
+│   │   ├── typeChart.js                   # Tabla de tipos (mirror del backend)
+│   │   └── typeChart.test.js              # Tests Vitest
 │   ├── services/
-│   │   └── trainerService.js              # Llamadas a /api/trainers/create
+│   │   ├── trainerService.js              # POST /api/trainers/create
+│   │   ├── trainerService.test.js
+│   │   ├── pokemonService.js              # GET /api/pokemons (con fallback local)
+│   │   └── pokemonService.test.js
 │   ├── utils/
-│   │   └── validators.js
+│   │   ├── validators.js                  # Validación cliente
+│   │   └── validators.test.js
+│   ├── test/
+│   │   └── setup.js                       # Bootstrap Vitest + jest-dom
 │   ├── App.css
 │   └── index.css
 │
 ├── index.html
-├── vite.config.js
+├── vite.config.js                          # Config Vite + Vitest (jsdom, globals)
 ├── eslint.config.js
 └── package.json
 ```
 
+> `hooks/useAudio.js` fue eliminado en la última pasada de limpieza porque no se usaba en ningún componente y arrastraba warnings de `react-hooks/refs`. Si vuelve a hacer falta, hay que reimplementarlo evitando escribir en `ref.current` durante el render.
+
 ---
 
-## 🧱 Arquitectura del flujo
+## Arquitectura del flujo
 
 El árbol de componentes es **lineal**, cada componente decide cuándo cede el control al siguiente:
 
 ```
 App
 └── TrainerSetup           ─►  registra Jugador 1 → Jugador 2
-    └── PokemonSelection   ─►  draft de 3 Pokémon por equipo → vídeo entrada.mp4
+    └── PokemonSelection   ─►  fetch a /api/pokemons → draft → vídeo entrada.mp4
         └── BattleArena    ─►  intro de lanzamiento → combate → victoria
 ```
 
-Cada componente sólo conoce a su hijo inmediato y le pasa el estado mínimo (nombres de entrenadores, equipos, referencia al `Audio` compartido…). Esto evita reflows y hace fácil seguir el orden temporal.
+Cada componente sólo conoce a su hijo inmediato y le pasa el estado mínimo (nombres de entrenadores, equipos, referencia al `Audio` compartido, catálogo de Pokémon…).
+
+### Fuente única de verdad del catálogo
+
+- `PokemonSelection` llama a `pokemonService.listPokemons()` (endpoint `GET /api/pokemons`) al montarse.
+- La respuesta se normaliza y se guarda en el state `catalog`, indexado por nombre.
+- Ese `catalog` se pasa por props a `BattleArena`, que lo usa para resolver el estado inicial de cada Pokémon (tipo, velocidad, ataques, sprite, HP).
+- Si el backend está caído o el fetch falla, hay **fallback automático** a `constants/pokemons.js`. Ese archivo actúa como réplica offline, no como fuente principal.
+- `constants/typeChart.js` sigue siendo un mirror del `TypeChart.java` del backend (los tipos son strings idénticos al enum Java).
 
 ### Sincronización de música
 
@@ -120,35 +138,61 @@ Cada componente sólo conoce a su hijo inmediato y le pasa el estado mínimo (no
 
 Esto evita el clásico bug de "se solapan dos canciones" o "la música vuelve sola después de pausarla".
 
-### Catálogo y tabla de tipos
+### Validación en dos capas
 
-Los archivos `constants/pokemons.js` y `constants/typeChart.js` son **una copia 1:1** del modelo del backend (`Main.java` y `TypeChart.java`). El frontend no llama al servidor para calcular daño: lo resuelve en cliente. Si tocas estos archivos, **acuérdate de actualizar el equivalente en Java** para mantener la coherencia.
+- Frontend (`utils/validators.js` → `trainerValidator.validate`): feedback inmediato al usuario antes de disparar el POST.
+- Backend (Bean Validation en `TrainerDTO` + `GlobalExceptionHandler`): última barrera de seguridad, siempre presente aunque alguien salte la UI.
 
 ---
 
-## 🎨 Convenciones de código
+## Convenciones de código
 
 - **Componentes funcionales** + hooks de React.
 - **CSS modular por componente** (`Component.jsx` + `Component.css` en la misma carpeta).
 - **Tipos en español** en frontend y backend (`FUEGO`, `AGUA`, `PLANTA`, `NORMAL`), traducidos a `Fuego/Agua/Planta/Normal` mediante `TYPE_LABELS` cuando hace falta mostrar al usuario.
 - **Audio API nativa** (`new Audio(src)`), sin librerías externas.
 - Los **refs** se usan para todo lo que no debe disparar re-renders (instancias de audio, flags de "ya ejecutado").
+- **Servicios** en `services/` para todas las llamadas HTTP; los componentes nunca hacen `fetch` inline.
 
 ---
 
-## 🧪 Linting y formateo
+## Testing
+
+Vitest + Testing Library + jsdom. Suite actual: **14 tests en 4 archivos**.
+
+```sh
+npm test              # Ejecuta todo una vez
+npm run test:watch    # Modo watch
+npm run test:ui       # UI navegable
+```
+
+| Archivo | Cobertura |
+|---|---|
+| `constants/typeChart.test.js` | Multiplicadores de efectividad y mensajes contextuales |
+| `utils/validators.test.js` | Reglas de nombre, género y validación combinada |
+| `services/trainerService.test.js` | POST + propagación de mensajes de error del backend (fetch mockeado) |
+| `services/pokemonService.test.js` | GET catálogo + manejo de errores HTTP (fetch mockeado) |
+
+### Configuración
+
+- `vite.config.js` incluye el bloque `test` con `environment: 'jsdom'`, `globals: true` y `setupFiles: './src/test/setup.js'`.
+- `src/test/setup.js` importa `@testing-library/jest-dom/vitest` para tener los matchers extendidos.
+
+---
+
+## Linting
 
 ```sh
 npm run lint
 ```
 
-ESLint está configurado en `eslint.config.js`.
+ESLint 9 con `eslint-plugin-react-hooks` y `eslint-plugin-react-refresh`. Actualmente hay **6 errores y 3 warnings pre-existentes** en `BattleArena.jsx`, `PokemonSelection.jsx` y `TrainerSetup.jsx` — categorías `react-hooks/set-state-in-effect` y `react-hooks/refs`. El CI los ejecuta con `continue-on-error: true` para no bloquear PRs mientras se refactoriza la gestión de audio.
 
 ---
 
-## 🐛 Notas y mejoras futuras
+## Notas y mejoras futuras
 
+- Refactorizar los componentes para eliminar los lints de `react-hooks/refs` (pasar refs como props) y `set-state-in-effect` (mover lógica a event handlers o a `useSyncExternalStore`).
 - `lanzar.gif` se reproduce a la velocidad nativa del gif. Para tener control real (slow-mo, sincronización con `onEnded`), conviene convertirlo a un `.mp4` y usar `<video playbackRate={0.5}>`.
-- Si se añaden más Pokémon o tipos, **mantener `pokemons.js`/`typeChart.js` sincronizados con su contraparte Java**.
-- Migración a TypeScript pendiente (la base ya está limpia y tipable).
-- Tests con Vitest aún no implementados.
+- Migración a **TypeScript** pendiente.
+- Añadir tests de integración de componentes con Testing Library (por ejemplo `TrainerSetup` completo con `fetch` mockeado).

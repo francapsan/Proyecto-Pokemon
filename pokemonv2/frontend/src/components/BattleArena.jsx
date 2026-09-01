@@ -80,9 +80,11 @@ const TypewriterText = ({ text, speed = 40 }) => {
 };
 
 // Construye el estado inicial de un Pokémon a partir de su nombre,
-// resolviendo type, speed, ataques y sprite desde el catálogo.
-const buildPokemonState = (basePokemon, fallbackName) => {
-    const data = POKEMON_CATALOG[basePokemon?.name] || POKEMON_CATALOG[fallbackName];
+// resolviendo type, speed, ataques y sprite desde el catálogo dado
+// (con fallback al catálogo local si no viene del backend).
+const buildPokemonState = (basePokemon, fallbackName, catalog) => {
+    const source = catalog && Object.keys(catalog).length > 0 ? catalog : POKEMON_CATALOG;
+    const data = source[basePokemon?.name] || source[fallbackName];
     return {
         name: data.name,
         type: data.type,
@@ -96,11 +98,11 @@ const buildPokemonState = (basePokemon, fallbackName) => {
 
 // Construye un equipo completo (array de estados de Pokémon).
 // Se usa para mantener el HP residual de cada Pokémon entre cambios.
-const buildTeam = (teamArr, fallbackName) => {
+const buildTeam = (teamArr, fallbackName, catalog) => {
     const source = (Array.isArray(teamArr) && teamArr.length > 0)
         ? teamArr
         : [{ name: fallbackName }];
-    return source.map(p => buildPokemonState(p, fallbackName));
+    return source.map(p => buildPokemonState(p, fallbackName, catalog));
 };
 
 // Mapeo de tipo del ataque a clase CSS del proyectil.
@@ -112,10 +114,10 @@ const PROJECTILE_TYPE_TO_CLASS = {
 };
 
 // --- COMPONENTE PRINCIPAL: Arena de Combate ---
-const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = null }) => {
+const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = null, catalog = null }) => {
     // --- EQUIPOS COMPLETOS (mantienen HP residual de cada Pokémon) ---
-    const [player1Team, setPlayer1Team] = useState(() => buildTeam(teams[1], 'Charizard'));
-    const [player2Team, setPlayer2Team] = useState(() => buildTeam(teams[2], 'Blastoise'));
+    const [player1Team, setPlayer1Team] = useState(() => buildTeam(teams[1], 'Charizard', catalog));
+    const [player2Team, setPlayer2Team] = useState(() => buildTeam(teams[2], 'Blastoise', catalog));
 
     // --- ÍNDICE DEL POKÉMON ACTIVO DE CADA EQUIPO ---
     const [player1Index, setPlayer1Index] = useState(0);
@@ -127,8 +129,8 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
 
     // --- TURNO ACTIVO: empieza el más rápido (a igual velocidad, jugador 1) ---
     const [currentTurn, setCurrentTurn] = useState(() => {
-        const p1 = buildPokemonState(teams[1]?.[0], 'Charizard');
-        const p2 = buildPokemonState(teams[2]?.[0], 'Blastoise');
+        const p1 = buildPokemonState(teams[1]?.[0], 'Charizard', catalog);
+        const p2 = buildPokemonState(teams[2]?.[0], 'Blastoise', catalog);
         return p1.speed >= p2.speed ? 'player1' : 'player2';
     });
 

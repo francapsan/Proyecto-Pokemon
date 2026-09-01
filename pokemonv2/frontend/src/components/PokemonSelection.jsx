@@ -1,13 +1,25 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './PokemonSelection.css';
-import { API_CONFIG, GAME_CONFIG, AUDIO_CONFIG } from '../constants/config';
+import { GAME_CONFIG, AUDIO_CONFIG } from '../constants/config';
 import { POKEMON_LIST } from '../constants/pokemons';
+import { pokemonService } from '../services/pokemonService';
 import { TYPE_LABELS } from '../constants/typeChart';
 import BattleArena from './BattleArena';
+
+// Normaliza la respuesta del backend (`maxHp`) al formato interno (`hp`)
+// que ya usan el resto de componentes.
+const normalizePokemon = (p) => ({
+    name: p.name,
+    type: p.type,
+    hp: p.maxHp ?? p.hp,
+    speed: p.speed,
+    attacks: p.attacks ?? [],
+});
 const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, isMusicPlaying: sharedIsMusicPlaying, setIsMusicPlaying: setSharedIsMusicPlaying }) => {
     const [pokemons, setPokemons] = useState([]);
+    const [catalog, setCatalog] = useState({});
     const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
+    const [error] = useState(null);
     
     const [teams, setTeams] = useState({ 1: [], 2: [] });
     const [message, setMessage] = useState('');
@@ -53,17 +65,25 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
     }, [isMusicPlaying]);
 
     useEffect(() => {
-        // Lista de Pokémon disponibles tomada del catálogo central.
-        // Solo se persisten campos necesarios para la fase de selección;
-        // los ataques se resolverán en la BattleArena a partir del nombre.
-        const availablePokemons = POKEMON_LIST.map(p => ({
-            name: p.name,
-            type: p.type,
-            hp: p.hp,
-            speed: p.speed,
-        }));
-        setPokemons(availablePokemons);
-        setIsLoading(false);
+        let cancelled = false;
+
+        const applyCatalog = (list) => {
+            if (cancelled) return;
+            const normalized = list.map(normalizePokemon);
+            setPokemons(normalized.map(({ name, type, hp, speed }) => ({ name, type, hp, speed })));
+            const byName = Object.fromEntries(normalized.map((p) => [p.name, p]));
+            setCatalog(byName);
+            setIsLoading(false);
+        };
+
+        pokemonService.listPokemons()
+            .then((data) => applyCatalog(data))
+            .catch((err) => {
+                console.warn('Fallback al catálogo local:', err.message);
+                applyCatalog(POKEMON_LIST);
+            });
+
+        return () => { cancelled = true; };
     }, []);
 
     useEffect(() => {
@@ -211,6 +231,7 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
                 trainers={trainers} 
                 teams={teams} 
                 battleMusic={battleMusic.current} 
+                catalog={catalog}
             />
         );
     }

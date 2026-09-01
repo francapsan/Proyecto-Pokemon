@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './TrainerSetup.css';
-import { API_CONFIG, AUDIO_CONFIG, GAME_CONFIG } from '../constants/config';
+import { AUDIO_CONFIG, GAME_CONFIG } from '../constants/config';
+import { trainerService } from '../services/trainerService';
+import { trainerValidator } from '../utils/validators';
 import PokemonSelection from './PokemonSelection';
 
 const TrainerSetup = () => { 
@@ -80,32 +82,16 @@ const TrainerSetup = () => {
             backgroundMusic.current.play().catch(e => console.error("Error al reproducir la música de fondo después de la interacción:", e));
         }
 
-        if (!name.trim()) {
-            setMessage("¡Falta información! Introduce un nombre.");
-            return;
-        }
-        if (!gender) {
-            setMessage("¡Falta información! Selecciona si eres chico o chica.");
+        const { isValid, errors } = trainerValidator.validate({ name, gender });
+        if (!isValid) {
+            setMessage(errors.name || errors.gender || "Faltan datos.");
             return;
         }
 
         setIsWaiting(true);
 
         try {
-            const response = await fetch(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.TRAINERS}`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ name, gender }),
-            });
-
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(errorText || 'Error al crear el entrenador');
-            }
-
-            const data = await response.json();
+            const data = await trainerService.createTrainer({ name: name.trim(), gender });
             const newTrainers = [...trainers, data];
             setTrainers(newTrainers);
             

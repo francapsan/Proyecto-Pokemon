@@ -1,0 +1,13 @@
+{
+  "properties": [
+    {
+      "name": "app.cors.allowed-origins",
+      "type": "java.lang.String[]",
+      "description": "Orígenes permitidos por CORS para los endpoints bajo /api/**. Acepta una lista coma-separada.",
+      "defaultValue": [
+        "http://localhost:3000",
+        "http://localhost:5173"
+      ]
+    }
+  ]
+}
