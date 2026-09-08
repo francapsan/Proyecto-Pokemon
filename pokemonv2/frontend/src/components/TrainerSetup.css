@@ -1,234 +1,141 @@
+/* =========================================================================
+   PANTALLA 1 — REGISTRO DE ENTRENADORES
+   Consume los tokens definidos en src/index.css.
+   ========================================================================= */
+
 .trainer-setup-container {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100vh;
-    background-color: white;
-    font-family: 'Courier New', Courier, monospace;
+    flex: 1;
+    /* El fondo cielo viene del <body> global — no lo repetimos aquí */
+    font-family: var(--pk-font-body);
     position: relative;
     overflow: hidden;
+    padding: var(--sp-6);
 }
 
-.music-toggle {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    font-size: 2rem;
-    cursor: pointer;
-    z-index: 1000;
-    color: #3b4cca;
-    background-color: white;
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
-    transition: transform 0.1s ease, background-color 0.2s ease;
-}
-
-.music-toggle:hover {
-    background-color: #e0f2fe;
-}
-
-.music-toggle:active {
-    transform: scale(0.95);
-}
-
+/* --- Card principal (estilo neobrutalista compartido) --- */
 .trainer-setup-card {
-    background-color: white;
-    border: 5px solid #3b4cca;
-    border-radius: 15px;
-    padding: 2.5rem;
-    width: 450px;
+    background-color: var(--pk-panel);
+    border: var(--pk-border);
+    border-radius: var(--pk-radius-lg);
+    padding: var(--sp-10) var(--sp-8);
+    width: 460px;
+    max-width: 100%;
     text-align: center;
-    box-shadow: 8px 8px 0px rgba(59, 76, 202, 0.3);
+    box-shadow: var(--pk-shadow-hard-strong);
     position: relative;
     z-index: 1;
 }
 
-.title {
-    color: #ffcb05;
-    text-shadow: 2px 2px 0 #3b4cca, -2px -2px 0 #3b4cca, 2px -2px 0 #3b4cca, -2px 2px 0 #3b4cca;
-    font-size: 1.8rem;
-    margin-bottom: 2rem;
-}
-
 .player-turn-title {
-    color: #3b4cca;
-    margin-bottom: 1.5rem;
+    font-family: var(--pk-font-display);
+    font-size: 1rem;
+    color: var(--pk-blue);
+    margin-bottom: var(--sp-6);
 }
 
 .input-group {
-    margin-bottom: 1.5rem;
+    margin-bottom: var(--sp-6);
     text-align: left;
 }
 
 .input-group label {
     display: block;
-    font-weight: bold;
-    color: #3b4cca;
-    margin-bottom: 0.5rem;
-    font-size: 1.1rem;
+    font-family: var(--pk-font-display);
+    font-size: 0.7rem;
+    color: var(--pk-blue);
+    margin-bottom: var(--sp-2);
+    line-height: 1.5;
 }
 
 .name-input {
     width: 100%;
-    padding: 0.8rem;
-    border: 3px solid #3b4cca;
-    border-radius: 8px;
-    font-size: 1rem;
-    font-family: inherit;
+    padding: var(--sp-3);
+    border: 3px solid var(--pk-blue);
+    border-radius: var(--pk-radius-sm);
+    font-family: var(--pk-font-body);
+    font-size: 1.4rem;
+    color: var(--pk-blue-dark);
+    background-color: var(--pk-panel);
     box-sizing: border-box;
     outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .name-input:focus {
-    border-color: #ffcb05;
+    border-color: var(--pk-yellow);
+    box-shadow: var(--pk-glow-yellow);
 }
 
 .gender-buttons {
     display: flex;
-    gap: 1rem;
+    gap: var(--sp-3);
 }
 
-.gender-btn {
+/* El único ajuste específico que no cubre <Button variant="secondary">:
+   que ambos botones ocupen mitad y mitad dentro del contenedor flex. */
+.gender-buttons > .gender-btn {
     flex: 1;
-    padding: 1rem;
-    background-color: #f1f5f9;
-    border: 3px solid #cbd5e1;
-    border-radius: 8px;
-    font-size: 1.1rem;
-    font-family: inherit;
-    font-weight: bold;
-    cursor: pointer;
-    color: #64748b;
-    transition: all 0.2s ease;
-}
-
-.gender-btn.selected, .gender-btn:hover {
-    background-color: #ffcb05;
-    border-color: #3b4cca;
-    color: #3b4cca;
 }
 
 .message {
-    color: #ef4444;
-    font-weight: bold;
-    margin-bottom: 1rem;
+    color: var(--pk-red);
+    font-family: var(--pk-font-body);
+    font-size: 1.2rem;
+    margin-bottom: var(--sp-4);
+    min-height: 1.5rem;
 }
 
-.start-btn {
-    width: 100%;
-    padding: 1rem;
-    background-color: #3b4cca;
-    color: #ffcb05;
-    border: 3px solid #ffcb05;
-    border-radius: 8px;
-    font-size: 1.3rem;
-    font-weight: bold;
-    font-family: inherit;
-    cursor: pointer;
-    text-transform: uppercase;
-    transition: transform 0.1s ease;
-}
-
-.start-btn:active {
-    transform: scale(0.95);
-}
-
+/* --- Modal de bienvenida --- */
 .start-modal-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    inset: 0;
     background-color: rgba(0, 0, 0, 0.7);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 2000;
-    animation: fadeIn 0.3s ease-in;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
+    animation: pk-fade-in 0.3s ease-in;
 }
 
 .start-modal {
-    background-color: white;
-    border: 5px solid #3b4cca;
-    border-radius: 15px;
-    padding: 3rem;
+    background-color: var(--pk-panel);
+    border: var(--pk-border);
+    border-radius: var(--pk-radius-lg);
+    padding: var(--sp-10) var(--sp-12);
     text-align: center;
-    box-shadow: 8px 8px 0px rgba(59, 76, 202, 0.3), 0 0 30px rgba(0, 0, 0, 0.3);
-    animation: slideUp 0.4s ease-out;
-}
-
-@keyframes slideUp {
-    from {
-        transform: translateY(50px);
-        opacity: 0;
-    }
-    to {
-        transform: translateY(0);
-        opacity: 1;
-    }
+    box-shadow: var(--pk-shadow-hard-strong), 0 0 30px rgba(0, 0, 0, 0.3);
+    animation: pk-slide-up 0.4s ease-out;
 }
 
 .start-modal h1 {
-    color: #ffcb05;
-    text-shadow: 2px 2px 0 #3b4cca, -2px -2px 0 #3b4cca, 2px -2px 0 #3b4cca, -2px 2px 0 #3b4cca;
+    font-family: var(--pk-font-display);
     font-size: 2rem;
-    margin-bottom: 1rem;
+    letter-spacing: 3px;
+    margin-bottom: var(--sp-4);
 }
 
 .start-modal p {
-    color: #3b4cca;
+    color: var(--pk-blue);
+    font-family: var(--pk-font-body);
     font-size: 1.5rem;
-    margin-bottom: 2rem;
-    font-weight: bold;
+    margin-bottom: var(--sp-8);
 }
 
-.start-button {
-    padding: 1.2rem 3rem;
-    background-color: #3b4cca;
-    color: #ffcb05;
-    border: 3px solid #ffcb05;
-    border-radius: 8px;
-    font-size: 1.4rem;
-    font-weight: bold;
-    font-family: inherit;
-    cursor: pointer;
-    text-transform: uppercase;
-    transition: all 0.2s ease;
-}
-
-.start-button:hover {
-    transform: scale(1.05);
-    box-shadow: 0 0 10px rgba(59, 76, 202, 0.5);
-}
-
-.start-button:active {
-    transform: scale(0.95);
-}
-
+/* --- Entrenadores decorativos animados (chico/chica) --- */
 .trainer-gif {
     position: absolute;
     top: 50%;
     height: auto;
-    width: calc(50% - 225px - 8vw);
+    width: calc(50% - 230px - 8vw);
     max-height: 80vh;
     opacity: 0;
     animation-duration: 0.7s;
     animation-fill-mode: forwards;
     animation-timing-function: ease-out;
+    pointer-events: none;
 }
 
 .chico-gif {
@@ -240,43 +147,23 @@
     right: 2vw;
     animation-name: slideInRight;
 }
+
 @keyframes slideInLeft {
-    from {
-        transform: translateX(-100%) translateY(-50%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0) translateY(-50%);
-        opacity: 1;
-    }
+    from { transform: translateX(-100%) translateY(-50%); opacity: 0; }
+    to   { transform: translateX(0)      translateY(-50%); opacity: 1; }
 }
 
 @keyframes slideInRight {
-    from {
-        transform: translateX(100%) translateY(-50%);
-        opacity: 0;
-    }
-    to {
-        transform: translateX(0) translateY(-50%);
-        opacity: 1;
-    }
+    from { transform: translateX(100%) translateY(-50%); opacity: 0; }
+    to   { transform: translateX(0)     translateY(-50%); opacity: 1; }
 }
 
-/* Loading Gif Inline Styles */
+/* --- Indicador de carga inline (compartido) --- */
 .loading-gif {
     width: 30px;
     height: 30px;
-    margin-left: 0.5rem;
+    margin-left: var(--sp-2);
     vertical-align: middle;
     display: inline-block;
-    animation: bounce 0.8s infinite;
-}
-
-@keyframes bounce {
-    0%, 100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-5px);
-    }
+    animation: pk-bounce 0.8s infinite;
 }

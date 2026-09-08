@@ -1,111 +1,179 @@
+/* =========================================================================
+   SISTEMA DE DISEÑO — COMBATE POKÉMON
+   Fuente única de verdad para colores, tipografía, espaciado, sombras y
+   fondo compartido. Todos los componentes deben consumir estos tokens.
+   ========================================================================= */
+
+@import './styles/animations.css';
+
 :root {
-  --text: #6b6375;
-  --text-h: #08060d;
-  --bg: #fff;
-  --border: #e5e4e7;
-  --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
-  --social-bg: rgba(244, 243, 236, 0.5);
-  --shadow:
-    rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
+  /* ---------- Paleta canónica Pokémon ---------- */
+  --pk-blue: #3b4cca;
+  --pk-blue-dark: #2a379e;
+  --pk-blue-soft: #e0e6ff;
+  --pk-yellow: #ffcb05;
+  --pk-yellow-hi: #ffde00;
+  --pk-red: #ee1515;
+  --pk-red-soft: #ff4d4d;
+  --pk-gold: #ffd700; /* solo HUD de combate */
 
-  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono: ui-monospace, Consolas, monospace;
+  /* Tipos de Pokémon (para botones y highlights) */
+  --pk-type-fire: linear-gradient(135deg, #ff6b35, #c0392b);
+  --pk-type-water: linear-gradient(135deg, #3498db, #1e5c8b);
+  --pk-type-plant: linear-gradient(135deg, #58d68d, #1e8449);
+  --pk-type-normal: linear-gradient(135deg, #95a5a6, #5d6d7e);
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
-  color-scheme: light dark;
-  color: var(--text);
-  background: var(--bg);
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
+  /* ---------- Superficies ---------- */
+  --pk-panel: #ffffff;
+  --pk-panel-alt: #f8f9fa;
+  --pk-panel-dark: rgba(0, 0, 0, 0.78);
+  --pk-panel-dark-strong: rgba(0, 0, 0, 0.88);
+
+  /* Fondo cielo pixel-art compartido en las 3 pantallas.
+     Un degradado azul cielo → celeste claro que recuerda al horizonte de
+     Kanto. El combate añadirá encima sus propias plataformas de tierra. */
+  --pk-sky: linear-gradient(180deg, #7ec8ff 0%, #a8d8ff 45%, #d8ecff 100%);
+  --pk-sky-dusk: linear-gradient(180deg, #4a6db5 0%, #7a8ccc 55%, #b8c8e6 100%);
+
+  /* ---------- Tipografía ---------- */
+  --pk-font-display: 'Press Start 2P', 'Courier New', monospace;
+  --pk-font-body: 'VT323', 'Courier New', monospace;
+
+  --pk-fs-title: 2rem;      /* h1 de página */
+  --pk-fs-heading: 1.2rem;  /* h2/h3 secundarios */
+  --pk-fs-body: 1.15rem;    /* párrafos y labels con VT323 */
+  --pk-fs-ui: 0.75rem;      /* botones y HUD con Press Start 2P */
+  --pk-fs-small: 0.55rem;   /* metadata en HUD */
+
+  /* ---------- Bordes y radios ---------- */
+  --pk-radius-sm: 6px;
+  --pk-radius-md: 10px;
+  --pk-radius-lg: 14px;
+
+  --pk-border-w: 4px;
+  --pk-border: var(--pk-border-w) solid var(--pk-blue);
+  --pk-border-hud: 3px solid var(--pk-gold);
+
+  /* ---------- Sombras neobrutalistas ---------- */
+  /* Bloque duro desplazado — es el sello visual del proyecto */
+  --pk-shadow-hard: 6px 6px 0 rgba(59, 76, 202, 0.35);
+  --pk-shadow-hard-strong: 8px 8px 0 rgba(59, 76, 202, 0.4);
+  --pk-shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --pk-glow-yellow: 0 0 12px rgba(255, 203, 5, 0.6);
+  --pk-glow-red: 0 0 10px var(--pk-red-soft);
+  --pk-glow-blue: 0 0 10px #4d4dff;
+
+  /* ---------- Escala de espaciado (múltiplos de 4) ---------- */
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 20px;
+  --sp-6: 24px;
+  --sp-8: 32px;
+  --sp-10: 40px;
+  --sp-12: 48px;
+
+  /* ---------- Ajustes globales ---------- */
+  color-scheme: light;
+  font-family: var(--pk-font-body);
+  font-size: 18px;
+  line-height: 1.5;
+  color: #1a1a1a;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
-  @media (max-width: 1024px) {
-    font-size: 16px;
-  }
+  text-rendering: optimizeLegibility;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --text: #9ca3af;
-    --text-h: #f3f4f6;
-    --bg: #16171d;
-    --border: #2e303a;
-    --code-bg: #1f2028;
-    --accent: #c084fc;
-    --accent-bg: rgba(192, 132, 252, 0.15);
-    --accent-border: rgba(192, 132, 252, 0.5);
-    --social-bg: rgba(47, 48, 58, 0.5);
-    --shadow:
-      rgba(0, 0, 0, 0.4) 0 10px 15px -3px, rgba(0, 0, 0, 0.25) 0 4px 6px -2px;
-  }
+/* =========================================================================
+   RESET / BASE
+   ========================================================================= */
 
-  #social .button-icon {
-    filter: invert(1) brightness(2);
-  }
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
 }
 
 body {
   margin: 0;
+  min-height: 100vh;
+  /* Fondo cielo pixel-art compartido en TODAS las pantallas.
+     Cada componente ya no necesita declarar background-color. */
+  background: var(--pk-sky);
+  background-attachment: fixed;
+  /* Pequeña textura de "nubes pixeladas" muy sutil para dar riqueza al cielo
+     sin cargar imágenes externas. */
+  background-image:
+    radial-gradient(circle at 15% 20%, rgba(255, 255, 255, 0.35) 0, rgba(255, 255, 255, 0) 12%),
+    radial-gradient(circle at 82% 30%, rgba(255, 255, 255, 0.28) 0, rgba(255, 255, 255, 0) 10%),
+    radial-gradient(circle at 60% 75%, rgba(255, 255, 255, 0.22) 0, rgba(255, 255, 255, 0) 14%),
+    var(--pk-sky);
+  overflow-x: hidden;
+  position: relative;
 }
 
+/* --- Capa decorativa: patrón de pokéballs muy tenue ------------------
+   SVG inline codificado como data-URI. Sin peticiones extras.
+   Se sitúa por encima del cielo pero por debajo del contenido, con
+   opacidad y tamaño calibrados para que solo se perciba como textura. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.18;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'><g fill='none' stroke='%233b4cca' stroke-width='4'><circle cx='60' cy='60' r='34'/><line x1='26' y1='60' x2='94' y2='60'/><circle cx='60' cy='60' r='9' fill='%23ffffff'/></g><g fill='none' stroke='%233b4cca' stroke-width='4'><circle cx='160' cy='150' r='24'/><line x1='136' y1='150' x2='184' y2='150'/><circle cx='160' cy='150' r='6' fill='%23ffffff'/></g></svg>");
+  background-repeat: repeat;
+  background-size: 220px 220px;
+}
+
+/* Que el contenido de la app quede por encima del patrón decorativo */
 #root {
-  width: 1126px;
-  max-width: 100%;
-  margin: 0 auto;
-  text-align: center;
-  border-inline: 1px solid var(--border);
-  min-height: 100svh;
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
-  box-sizing: border-box;
 }
+
+/* =========================================================================
+   TIPOGRAFÍA BASE
+   ========================================================================= */
 
 h1,
-h2 {
-  font-family: var(--heading);
-  font-weight: 500;
-  color: var(--text-h);
-}
-
-h1 {
-  font-size: 56px;
-  letter-spacing: -1.68px;
-  margin: 32px 0;
-  @media (max-width: 1024px) {
-    font-size: 36px;
-    margin: 20px 0;
-  }
-}
-h2 {
-  font-size: 24px;
-  line-height: 118%;
-  letter-spacing: -0.24px;
-  margin: 0 0 8px;
-  @media (max-width: 1024px) {
-    font-size: 20px;
-  }
-}
-p {
+h2,
+h3,
+h4 {
+  font-family: var(--pk-font-display);
+  font-weight: normal;
   margin: 0;
+  color: var(--pk-blue);
+  letter-spacing: 0.5px;
 }
 
-code,
-.counter {
-  font-family: var(--mono);
-  display: inline-flex;
-  border-radius: 4px;
-  color: var(--text-h);
+p,
+label,
+input,
+textarea {
+  font-family: var(--pk-font-body);
 }
 
-code {
-  font-size: 15px;
-  line-height: 135%;
-  padding: 4px 8px;
-  background: var(--code-bg);
+button {
+  font-family: var(--pk-font-display);
+}
+
+/* Título estilo "logo Pokémon": amarillo con contorno azul */
+.pk-title-stroke {
+  color: var(--pk-yellow);
+  text-shadow:
+    2px 2px 0 var(--pk-blue),
+    -2px -2px 0 var(--pk-blue),
+    2px -2px 0 var(--pk-blue),
+    -2px 2px 0 var(--pk-blue),
+    0 2px 0 var(--pk-blue),
+    2px 0 0 var(--pk-blue),
+    0 -2px 0 var(--pk-blue),
+    -2px 0 0 var(--pk-blue);
 }

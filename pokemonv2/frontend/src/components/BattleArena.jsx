@@ -3,6 +3,9 @@ import './Battle.css';
 import { AUDIO_CONFIG } from '../constants/config';
 import { POKEMON_CATALOG } from '../constants/pokemons';
 import { getTypeMultiplier, getEffectivenessMessage, POKEMON_TYPES } from '../constants/typeChart';
+import PageShell from './ui/PageShell';
+import Panel from './ui/Panel';
+import Button from './ui/Button';
 
 // --- SUB-COMPONENTE: Barra de Vida ---
 const HealthBar = ({ currentHp, maxHp, name }) => {
@@ -12,7 +15,7 @@ const HealthBar = ({ currentHp, maxHp, name }) => {
     if (hpPercentage <= 20) barColorClass = 'red';
 
     return (
-        <div className="health-bar-container">
+        <Panel variant="hud" padding="sm" className="health-bar-container">
             <h3 className="pokemon-name">{name}</h3>
             <div className="health-bar">
                 <div
@@ -21,7 +24,7 @@ const HealthBar = ({ currentHp, maxHp, name }) => {
                 />
             </div>
             <p className="hp-text">{currentHp} / {maxHp}</p>
-        </div>
+        </Panel>
     );
 };
 
@@ -29,7 +32,9 @@ const HealthBar = ({ currentHp, maxHp, name }) => {
 const AliveIndicatorBox = ({ aliveCount, trainerName }) => {
     if (aliveCount <= 0 && !trainerName) return null;
     return (
-        <div
+        <Panel
+            variant="hud"
+            padding="sm"
             className="alive-indicator-box"
             aria-label={`Pokémon disponibles: ${aliveCount}`}
         >
@@ -48,7 +53,7 @@ const AliveIndicatorBox = ({ aliveCount, trainerName }) => {
                     </span>
                 )}
             </div>
-        </div>
+        </Panel>
     );
 };
 
@@ -459,12 +464,13 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
     const showPanel = introState.started && !battleOver && (!isTurnInProgress || isSwitching);
 
     return (
-        <>
-            {/* Botón de control de música */}
-            <div className="music-toggle" onClick={toggleBattleMusic}>
-                {isBattleMusicPlaying ? '🔊' : '🔇'}
-            </div>
-
+        <PageShell
+            currentStep="battle"
+            isMusicPlaying={isBattleMusicPlaying}
+            onToggleMusic={toggleBattleMusic}
+            chrome="hidden"
+            musicPosition="top-center"
+        >
             <div className={arenaClasses}>
                 {/* Recuadros de HP del Jugador 1 (sólo cuando el Pokémon ya está fuera) */}
                 {introState.p1Shown && (
@@ -516,20 +522,17 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
                                 className="pokemon-sprite"
                             />
                         )}
-                        <div className="pokemon-base" />
+
+                        {/* Proyectil: nace desde el sprite del atacante y vuela
+                            hacia el defensor. Se renderiza dentro del .pokemon-platform
+                            para posicionarse relativo al pokémon, no a la arena. */}
+                        {animationState.projectile && animationState.attacking === 'player1' && (
+                            <div
+                                className={`projectile ${animationState.projectile.type || ''} throw-right`}
+                            />
+                        )}
                     </div>
                 </div>
-
-                {/* Proyectil */}
-                {animationState.projectile && (
-                    <div
-                        className={`
-                            projectile 
-                            ${animationState.projectile.type || ''} 
-                            ${animationState.projectile.direction}
-                        `}
-                    />
-                )}
 
                 {/* Lado del Jugador 2 (Derecha) */}
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', order: 3 }}>
@@ -551,92 +554,125 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
                                 className="pokemon-sprite"
                             />
                         )}
-                        <div className="pokemon-base" />
+
+                        {/* Proyectil del Jugador 2 (viaja hacia la izquierda) */}
+                        {animationState.projectile && animationState.attacking === 'player2' && (
+                            <div
+                                className={`projectile ${animationState.projectile.type || ''} throw-left`}
+                            />
+                        )}
                     </div>
                 </div>
 
                 {/* Caja de Diálogo */}
-                <div className="dialog-box">
+                <Panel variant="hud" className="dialog-box">
                     <TypewriterText text={dialogMessage} />
-                </div>
+                </Panel>
             </div>
 
             {/* Panel del Pokémon activo: ataques o selección de cambio.
                 Sólo se muestra cuando le toca elegir acción al jugador activo. */}
             {showPanel && (
-            <div className={`attack-panel attack-panel-${currentTurn === 'player1' ? 'left' : 'right'}`}>
+            <Panel
+                variant="hud"
+                className={`attack-panel attack-panel-${currentTurn === 'player1' ? 'left' : 'right'}`}
+            >
                 <div className="attack-panel-header">
                     <span className="attack-panel-turn">
                         Turno de {getTrainerName(currentTurn)} · {activeAttacker.name}
                     </span>
                     {!isSwitching ? (
-                        <button
-                            type="button"
+                        <Button
+                            variant="primary"
+                            size="sm"
                             className="reset-btn"
                             onClick={handleSwitchClick}
                             disabled={isTurnInProgress || battleOver || !canSwitch}
                             title={canSwitch ? 'Cambia tu Pokémon activo (consume el turno)' : 'No tienes más Pokémon disponibles'}
                         >
                             Cambiar
-                        </button>
+                        </Button>
                     ) : (
-                        <button
-                            type="button"
+                        <Button
+                            variant="primary"
+                            size="sm"
                             className="reset-btn"
                             onClick={handleSwitchCancel}
                             disabled={isTurnInProgress}
                         >
                             Volver
-                        </button>
+                        </Button>
                     )}
                 </div>
 
                 {!isSwitching ? (
                     <div className="attack-buttons">
-                        {activeAttacker.attacks.map((attack) => (
-                            <button
-                                key={attack.name}
-                                type="button"
-                                className={`attack-btn attack-type-${attack.type.toLowerCase()}`}
-                                onClick={() => executeAttack(attack)}
-                                disabled={!showAttackPanel}
-                                title={`Daño base: ${attack.damage} · Tipo: ${attack.type}`}
-                            >
-                                <span className="attack-name">{attack.name}</span>
-                                <span className="attack-meta">
-                                    {attack.type} · {attack.damage}
-                                </span>
-                            </button>
-                        ))}
+                        {activeAttacker.attacks.map((attack) => {
+                            const typeKey = attack.type.toLowerCase();
+                            const variantMap = {
+                                fuego: 'type-fire',
+                                agua: 'type-water',
+                                planta: 'type-plant',
+                                normal: 'type-normal',
+                            };
+                            const variant = variantMap[typeKey] || 'type-normal';
+                            return (
+                                <Button
+                                    key={attack.name}
+                                    variant={variant}
+                                    size="sm"
+                                    className={`attack-btn attack-type-${typeKey}`}
+                                    onClick={() => executeAttack(attack)}
+                                    disabled={!showAttackPanel}
+                                    title={`Daño base: ${attack.damage} · Tipo: ${attack.type}`}
+                                >
+                                    <span className="attack-name">{attack.name}</span>
+                                    <span className="attack-meta">
+                                        {attack.type} · {attack.damage}
+                                    </span>
+                                </Button>
+                            );
+                        })}
                     </div>
                 ) : (
                     <div className="switch-options">
-                        {switchableOptions.map(({ pokemon, index }) => (
-                            <button
-                                key={`${pokemon.name}-${index}`}
-                                type="button"
-                                className={`switch-option attack-type-${pokemon.type.toLowerCase()}`}
-                                onClick={() => performSwitch(index)}
-                                disabled={isTurnInProgress}
-                            >
-                                <img
-                                    src={pokemon.sprite}
-                                    alt={pokemon.name}
-                                    className="switch-option-sprite"
-                                />
-                                <div className="switch-option-info">
-                                    <span className="attack-name">{pokemon.name}</span>
-                                    <span className="attack-meta">
-                                        {pokemon.type} · HP {pokemon.hp}/{pokemon.maxHp}
-                                    </span>
-                                </div>
-                            </button>
-                        ))}
+                        {switchableOptions.map(({ pokemon, index }) => {
+                            const typeKey = pokemon.type.toLowerCase();
+                            const variantMap = {
+                                fuego: 'type-fire',
+                                agua: 'type-water',
+                                planta: 'type-plant',
+                                normal: 'type-normal',
+                            };
+                            const variant = variantMap[typeKey] || 'type-normal';
+                            return (
+                                <Button
+                                    key={`${pokemon.name}-${index}`}
+                                    variant={variant}
+                                    size="sm"
+                                    className={`switch-option attack-type-${typeKey}`}
+                                    onClick={() => performSwitch(index)}
+                                    disabled={isTurnInProgress}
+                                >
+                                    <img
+                                        src={pokemon.sprite}
+                                        alt={pokemon.name}
+                                        className="switch-option-sprite"
+                                    />
+                                    <div className="switch-option-info">
+                                        <span className="attack-name">{pokemon.name}</span>
+                                        <span className="attack-meta">
+                                            {pokemon.type} · HP {pokemon.hp}/{pokemon.maxHp}
+                                        </span>
+                                    </div>
+                                </Button>
+                            );
+                        })}
                     </div>
                 )}
-            </div>
+            </Panel>
             )}
-        </>
+        </PageShell>
     );
 };
 

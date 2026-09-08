@@ -1,0 +1,96 @@
+/* =========================================================================
+   Button — botón unificado con estilo neobrutalista.
+   Fuente única de verdad para todos los botones del juego.
+   ========================================================================= */
+
+.pk-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--sp-2);
+    font-family: var(--pk-font-display);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    border-radius: var(--pk-radius-sm);
+    border: 3px solid var(--pk-yellow);
+    box-shadow: var(--pk-shadow-hard);
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.2s ease, filter 0.2s ease;
+    text-align: center;
+    line-height: 1.2;
+    text-decoration: none;
+}
+
+.pk-btn:hover:not(:disabled) {
+    transform: translate(-2px, -2px);
+    box-shadow: 8px 8px 0 rgba(59, 76, 202, 0.4);
+    filter: brightness(1.08);
+}
+
+.pk-btn:active:not(:disabled) {
+    transform: translate(3px, 3px);
+    box-shadow: 3px 3px 0 rgba(59, 76, 202, 0.35);
+}
+
+.pk-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    box-shadow: 3px 3px 0 rgba(59, 76, 202, 0.2);
+}
+
+.pk-btn:focus-visible {
+    outline: 3px solid var(--pk-yellow);
+    outline-offset: 3px;
+}
+
+/* --- Tamaños --------------------------------------------------------- */
+
+.pk-btn--sm { padding: var(--sp-2) var(--sp-3); font-size: 0.6rem; }
+.pk-btn--md { padding: var(--sp-3) var(--sp-5); font-size: 0.75rem; }
+.pk-btn--lg { padding: var(--sp-4) var(--sp-6); font-size: 0.9rem; }
+
+.pk-btn--block { width: 100%; }
+
+/* --- Variantes de color ---------------------------------------------- */
+
+.pk-btn--primary {
+    background-color: var(--pk-blue);
+    color: var(--pk-yellow);
+    border-color: var(--pk-yellow);
+}
+
+.pk-btn--primary:hover:not(:disabled) {
+    background-color: var(--pk-blue-dark);
+}
+
+.pk-btn--secondary {
+    background-color: var(--pk-panel-alt);
+    color: var(--pk-blue);
+    border-color: var(--pk-blue);
+}
+
+.pk-btn--secondary.pk-btn--selected,
+.pk-btn--secondary:hover:not(:disabled) {
+    background-color: var(--pk-yellow);
+    color: var(--pk-blue-dark);
+    border-color: var(--pk-blue);
+}
+
+.pk-btn--ghost {
+    background-color: transparent;
+    color: var(--pk-blue);
+    border-color: var(--pk-blue);
+    box-shadow: none;
+}
+
+.pk-btn--ghost:hover:not(:disabled) {
+    background-color: var(--pk-blue-soft);
+    box-shadow: var(--pk-shadow-hard);
+}
+
+/* --- Variantes por tipo de Pokémon (para ataques) -------------------- */
+
+.pk-btn--type-fire   { background: var(--pk-type-fire);   color: white; border-color: white; }
+.pk-btn--type-water  { background: var(--pk-type-water);  color: white; border-color: white; }
+.pk-btn--type-plant  { background: var(--pk-type-plant);  color: white; border-color: white; }
+.pk-btn--type-normal { background: var(--pk-type-normal); color: white; border-color: white; }

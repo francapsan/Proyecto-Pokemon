@@ -5,6 +5,8 @@ import { POKEMON_LIST } from '../constants/pokemons';
 import { pokemonService } from '../services/pokemonService';
 import { TYPE_LABELS } from '../constants/typeChart';
 import BattleArena from './BattleArena';
+import PageShell from './ui/PageShell';
+import Panel from './ui/Panel';
 
 // Normaliza la respuesta del backend (`maxHp`) al formato interno (`hp`)
 // que ya usan el resto de componentes.
@@ -195,7 +197,7 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
     };
 
     const renderTeam = (team, trainer) => (
-        <div className="team-display">
+        <Panel variant="light" padding="sm" className="team-display">
             <h3>Equipo de {trainer?.name}</h3>
             <div className="team-pokemons">
                 {Array(GAME_CONFIG.TEAM_SIZE).fill(null).map((_, index) => {
@@ -211,16 +213,26 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
                     );
                 })}
             </div>
-        </div>
+        </Panel>
     );
 
     if (isLoading) {
         return (
-            <div className="pokemon-selection-container">
-                <div className="loading-container">
-                    <p className="loading-text">Cargando Pokémon... <img src="/gifs/carga.gif" alt="Cargando" className="loading-gif" /></p>
+            <PageShell
+                currentStep="selection"
+                isMusicPlaying={isMusicPlaying}
+                onToggleMusic={toggleBackgroundMusic}
+                chrome="hidden"
+            >
+                <div className="pokemon-selection-container">
+                    <div className="loading-container">
+                        <p className="loading-text">
+                            Cargando Pokémon...{' '}
+                            <img src="/gifs/carga.gif" alt="Cargando" className="loading-gif" />
+                        </p>
+                    </div>
                 </div>
-            </div>
+            </PageShell>
         );
     }
 
@@ -237,29 +249,32 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
     }
 
     return (
-        <div className="pokemon-selection-container">
-            {showTransition && (
-                <div className="transition-overlay">
-                    <video
-                        ref={transitionVideoRef}
-                        src="/gifs/entrada.mp4"
-                        className="transition-video"
-                        autoPlay
-                        playsInline
-                        onEnded={handleTransitionEnd}
-                        onError={(e) => {
-                            console.error('Error reproduciendo el vídeo de entrada:', e);
-                            handleTransitionEnd();
-                        }}
-                    />
-                </div>
-            )}
-            <div className="music-toggle" onClick={toggleBackgroundMusic}>
-                {isMusicPlaying ? '🔊' : '🔇'}
-            </div>
-            <h1 className="title">--- SELECCIÓN DE POKÉMON ---</h1>
-            {error && <p className="error-message">{error}</p>}
-            <p className="message">{message}</p>
+        <PageShell
+            currentStep="selection"
+            isMusicPlaying={isMusicPlaying}
+            onToggleMusic={toggleBackgroundMusic}
+            chrome={showTransition ? 'hidden' : 'full'}
+        >
+            <div className="pokemon-selection-container">
+                {showTransition && (
+                    <div className="transition-overlay">
+                        <video
+                            ref={transitionVideoRef}
+                            src="/gifs/entrada.mp4"
+                            className="transition-video"
+                            autoPlay
+                            playsInline
+                            onEnded={handleTransitionEnd}
+                            onError={(e) => {
+                                console.error('Error reproduciendo el vídeo de entrada:', e);
+                                handleTransitionEnd();
+                            }}
+                        />
+                    </div>
+                )}
+                <h2 className="pokemon-selection-heading">Elige tu equipo</h2>
+                {error && <p className="error-message">{error}</p>}
+                <p className="message">{message}</p>
 
             <div className="teams-container">
                 {renderTeam(player1Team, trainers[0])}
@@ -298,8 +313,9 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
                         </div>
                     );
                 })}
+                </div>
             </div>
-        </div>
+        </PageShell>
     );
 };
 

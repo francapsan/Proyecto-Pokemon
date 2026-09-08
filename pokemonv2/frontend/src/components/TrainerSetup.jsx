@@ -4,6 +4,8 @@ import { AUDIO_CONFIG, GAME_CONFIG } from '../constants/config';
 import { trainerService } from '../services/trainerService';
 import { trainerValidator } from '../utils/validators';
 import PokemonSelection from './PokemonSelection';
+import PageShell from './ui/PageShell';
+import Button from './ui/Button';
 
 const TrainerSetup = () => { 
     const [currentPlayer, setCurrentPlayer] = useState(1);
@@ -120,29 +122,29 @@ const TrainerSetup = () => {
     }
 
     return (
-        <>
+        <PageShell
+            currentStep="trainer"
+            isMusicPlaying={isMusicPlaying}
+            onToggleMusic={toggleBackgroundMusic}
+            chrome={showStartModal ? 'hidden' : 'full'}
+        >
             {showStartModal && (
                 <div className="start-modal-overlay">
                     <div className="start-modal">
-                        <h1>--- COMBATE POKÉMON ---</h1>
-                        <p>¡Bienvenidos entrenadores!</p>
-                        <button className="start-button" onClick={handleStartGame}>
+                        <h1 className="pk-title-stroke">POKÉMON</h1>
+                        <p>¡Bienvenidos, entrenadores!</p>
+                        <Button variant="primary" size="lg" onClick={handleStartGame}>
                             Comenzar
-                        </button>
+                        </Button>
                     </div>
                 </div>
             )}
-            <div className="music-toggle" onClick={toggleBackgroundMusic}>
-                {isMusicPlaying ? '🔊' : '🔇'}
-            </div>
             <div className="trainer-setup-container">
                 <div className="trainer-setup-card">
-                    <h1 className="title">--- COMBATE POKÉMON ---</h1>
-                    
                     <h2 className="player-turn-title">
                         Turno del Jugador {currentPlayer}
                     </h2>
-                    
+
                     <div className="input-group">
                         <label htmlFor="name-input">Introduce tu nombre:</label>
                         <input
@@ -159,20 +161,24 @@ const TrainerSetup = () => {
                     <div className="input-group">
                         <label>¿Eres chico o chica?</label>
                         <div className="gender-buttons">
-                            <button
-                                className={`gender-btn ${gender === 'chico' ? 'selected' : ''}`} 
+                            <Button
+                                variant="secondary"
+                                className="gender-btn"
+                                selected={gender === 'chico'}
                                 onClick={() => { setGender('chico'); playClickSound(); }}
                                 disabled={isWaiting}
                             >
                                 Chico
-                            </button>
-                            <button
-                                className={`gender-btn ${gender === 'chica' ? 'selected' : ''}`} 
+                            </Button>
+                            <Button
+                                variant="secondary"
+                                className="gender-btn"
+                                selected={gender === 'chica'}
                                 onClick={() => { setGender('chica'); playClickSound(); }}
                                 disabled={isWaiting}
                             >
                                 Chica
-                            </button>
+                            </Button>
                         </div>
                     </div>
                     {message && (
@@ -182,13 +188,15 @@ const TrainerSetup = () => {
                         </p>
                     )}
                     
-                    <button
-                        className="start-btn"
+                    <Button
+                        variant="primary"
+                        size="lg"
+                        block
                         onClick={handleStartAdventure}
                         disabled={isWaiting}
                     >
                         {currentPlayer === 1 ? 'Registrar Jugador 1' : 'Comenzar Aventura'}
-                    </button>
+                    </Button>
                 </div>
                 {gender === 'chico' && (
                     <img
@@ -207,7 +215,7 @@ const TrainerSetup = () => {
                     />
                 )}
             </div>
-        </>
+        </PageShell>
     );
 };
 

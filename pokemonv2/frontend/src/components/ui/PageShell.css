@@ -1,0 +1,173 @@
+/* =========================================================================
+   PageShell — marco visual compartido por las 3 pantallas.
+   Contiene logo + migas de progreso + <main> con el contenido de la fase.
+   ========================================================================= */
+
+.pk-shell {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}
+
+/* --- Header con logo + migas --- */
+.pk-shell__header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--sp-3);
+    padding: var(--sp-5) var(--sp-5) var(--sp-3);
+    position: relative;
+    z-index: 5;
+    /* Deja hueco a la derecha para que no colisione con MusicToggle (fixed) */
+    padding-right: calc(var(--sp-5) + 80px);
+    padding-left: calc(var(--sp-5) + 80px);
+}
+
+@media (max-width: 720px) {
+    .pk-shell__header {
+        padding-right: var(--sp-5);
+        padding-left: var(--sp-5);
+        padding-top: calc(var(--sp-5) + 60px); /* deja hueco al MusicToggle arriba */
+    }
+}
+
+/* --- Logo textual estilo Pokémon --- */
+.pk-shell__logo {
+    font-family: var(--pk-font-display);
+    font-size: 2.2rem;
+    letter-spacing: 4px;
+    line-height: 1;
+    user-select: none;
+    /* .pk-title-stroke (definido en index.css) aporta el efecto amarillo
+       con contorno azul. Añadimos aquí solo tamaño y espaciado. */
+}
+
+@media (max-width: 720px) {
+    .pk-shell__logo {
+        font-size: 1.4rem;
+        letter-spacing: 2px;
+    }
+}
+
+/* --- Migas de progreso --- */
+.pk-shell__breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: var(--sp-2);
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.pk-crumb {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--sp-1);
+    font-family: var(--pk-font-display);
+    font-size: 0.6rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    padding: var(--sp-2) var(--sp-3);
+    border-radius: 999px;
+    border: 2px solid var(--pk-blue);
+    background-color: var(--pk-panel);
+    color: var(--pk-blue);
+    box-shadow: 3px 3px 0 rgba(59, 76, 202, 0.25);
+    transition: transform 0.15s ease;
+    white-space: nowrap;
+}
+
+.pk-crumb--active {
+    background-color: var(--pk-yellow);
+    color: var(--pk-blue-dark);
+    border-color: var(--pk-blue-dark);
+    box-shadow: 3px 3px 0 rgba(59, 76, 202, 0.45);
+    transform: scale(1.05);
+}
+
+.pk-crumb--done {
+    background-color: var(--pk-yellow);
+    color: var(--pk-blue);
+    opacity: 0.85;
+}
+
+.pk-crumb--pending {
+    opacity: 0.55;
+}
+
+.pk-crumb__tick {
+    font-size: 0.7rem;
+    color: var(--pk-blue-dark);
+    line-height: 1;
+}
+
+.pk-crumb__sep {
+    color: var(--pk-blue);
+    font-family: var(--pk-font-display);
+    font-size: 0.7rem;
+    opacity: 0.6;
+}
+
+/* --- Modo COMPACT (usado en la pantalla de combate) ---
+   Solo muestra las migas, pequeñas, ancladas abajo en el centro con
+   opacidad reducida para no competir con el HUD dorado del combate. */
+.pk-shell__compact-nav {
+    position: fixed;
+    left: 50%;
+    transform: translateX(-50%);
+    top: var(--sp-3);
+    z-index: 40;
+    pointer-events: none;
+}
+
+.pk-shell__breadcrumbs--compact {
+    gap: var(--sp-1);
+    opacity: 0.65;
+    transition: opacity 0.2s ease;
+}
+
+.pk-shell__breadcrumbs--compact:hover {
+    opacity: 1;
+}
+
+.pk-shell__breadcrumbs--compact .pk-crumb {
+    font-size: 0.5rem;
+    padding: var(--sp-1) var(--sp-3);
+    border-width: 2px;
+    box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
+    background-color: var(--pk-panel-dark);
+    color: var(--pk-gold);
+    border-color: var(--pk-gold);
+}
+
+.pk-shell__breadcrumbs--compact .pk-crumb--active {
+    background-color: var(--pk-gold);
+    color: var(--pk-blue-dark);
+    border-color: var(--pk-gold);
+    transform: scale(1.02);
+}
+
+.pk-shell__breadcrumbs--compact .pk-crumb--done {
+    opacity: 0.8;
+}
+
+.pk-shell__breadcrumbs--compact .pk-crumb__sep {
+    font-size: 0.55rem;
+    color: var(--pk-gold);
+}
+
+@media (max-width: 720px) {
+    /* En móvil el HUD y el MusicToggle ya llenan mucho; ocultamos las
+       migas compactas para no saturar la pantalla. */
+    .pk-shell__compact-nav {
+        display: none;
+    }
+}
+
+/* --- Main con el contenido de la fase --- */
+.pk-shell__main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+}

@@ -1,0 +1,60 @@
+/* =========================================================================
+   MusicToggle — botón de música compartido en las 3 pantallas.
+   Fuente única del estilo: reemplaza las 3 copias que había en
+   TrainerSetup.css / PokemonSelection.css / Battle.css.
+   ========================================================================= */
+
+.pk-music-toggle {
+    position: fixed;
+    top: var(--sp-5);
+    font-size: 1.6rem;
+    cursor: pointer;
+    z-index: 1000;
+    color: var(--pk-blue);
+    background-color: var(--pk-panel);
+    border: 3px solid var(--pk-blue);
+    border-radius: 50%;
+    width: 52px;
+    height: 52px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: var(--pk-shadow-hard);
+    transition: transform 0.1s ease, background-color 0.2s ease;
+    padding: 0;
+    font-family: inherit;
+    line-height: 1;
+}
+
+/* Variantes de posicionamiento */
+.pk-music-toggle--top-right {
+    right: var(--sp-5);
+}
+
+/* Usado en la pantalla de combate para evitar colisión con las cajas
+   de HP de las esquinas. */
+.pk-music-toggle--top-center {
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.pk-music-toggle:hover {
+    background-color: var(--pk-yellow);
+}
+
+/* Feedback :active — respetamos el translateX de la variante centrada
+   para que no salte al pulsar. */
+.pk-music-toggle--top-right:active {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 rgba(59, 76, 202, 0.35);
+}
+
+.pk-music-toggle--top-center:active {
+    transform: translate(calc(-50% + 2px), 2px);
+    box-shadow: 2px 2px 0 rgba(59, 76, 202, 0.35);
+}
+
+.pk-music-toggle:focus-visible {
+    outline: 3px solid var(--pk-yellow);
+    outline-offset: 2px;
+}

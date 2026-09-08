@@ -1,99 +1,91 @@
+/* =========================================================================
+   PANTALLA 2 — SELECCIÓN DE POKÉMON
+   Consume los tokens definidos en src/index.css. Estilo neobrutalista
+   consistente con TrainerSetup y con la barra HUD del combate.
+   ========================================================================= */
+
 .pokemon-selection-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    min-height: 100vh;
-    background-color: white;
-    color: #333;
-    text-shadow: none;
-    padding: 10px 20px 20px;
-    font-family: 'Press Start 2P', cursive;
+    flex: 1;
+    /* Fondo cielo compartido — heredado del <body> */
+    color: var(--pk-blue-dark);
+    padding: var(--sp-3) var(--sp-5) var(--sp-5);
+    font-family: var(--pk-font-display);
     position: relative;
 }
 
-.music-toggle {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    font-size: 2rem;
-    cursor: pointer;
-    z-index: 1000;
-    color: #3b4cca;
-    background-color: white;
-    border-radius: 50%;
-    width: 50px;
-    height: 50px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    box-shadow: 2px 2px 5px rgba(0,0,0,0.2);
-    transition: transform 0.1s ease, background-color 0.2s ease;
+/* --- Heading secundario de la fase --- */
+.pokemon-selection-heading {
+    font-family: var(--pk-font-display);
+    font-size: 1.1rem;
+    line-height: 1.4;
+    margin: var(--sp-3) 0 var(--sp-5);
+    color: var(--pk-blue);
+    text-align: center;
 }
 
-.music-toggle:hover {
-    background-color: #e0f2fe;
-}
-
-.music-toggle:active {
-    transform: scale(0.95);
-}
-
-.pokemon-selection-container .title {
-    font-size: 2.5rem;
-    margin-bottom: 30px;
-    color: #FFDE00;
-    -webkit-text-stroke: 2px #3B4CCA;
-}
-
+/* --- Mensaje/turno actual --- */
 .pokemon-selection-container .message {
-    font-size: 1.2rem;
-    margin-bottom: 20px;
-    padding: 10px 20px;
-    background-color: #f0f0f0;
-    border-radius: 10px;
-    border: 2px solid #FFDE00;
+    font-family: var(--pk-font-body);
+    font-size: 1.35rem;
+    color: var(--pk-blue-dark);
+    margin-bottom: var(--sp-5);
+    padding: var(--sp-3) var(--sp-5);
+    background-color: var(--pk-panel);
+    border-radius: var(--pk-radius-md);
+    border: 3px solid var(--pk-blue);
+    box-shadow: var(--pk-shadow-hard);
     min-height: 50px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
+/* --- Contenedor de equipos de ambos jugadores --- */
 .teams-container {
     display: flex;
     justify-content: space-around;
     width: 100%;
     max-width: 1000px;
-    margin-bottom: 30px;
+    margin-bottom: var(--sp-6);
+    gap: var(--sp-5);
 }
 
+/* Panel light + ancho específico de columna. El resto de estilos
+   (fondo, borde, sombra, radio) viene del componente <Panel>. */
 .team-display {
-    background-color: #f8f9fa;
-    padding: 15px;
-    border-radius: 15px;
-    border: 3px solid #3B4CCA;
     width: 45%;
     text-align: center;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
 .team-display h3 {
-    margin-top: 0;
-    color: #FFDE00;
+    margin: 0 0 var(--sp-3);
+    font-family: var(--pk-font-display);
+    font-size: 0.75rem;
+    line-height: 1.5;
+    color: var(--pk-yellow);
+    text-shadow:
+        1px 1px 0 var(--pk-blue),
+        -1px -1px 0 var(--pk-blue),
+        1px -1px 0 var(--pk-blue),
+        -1px 1px 0 var(--pk-blue);
 }
 
 .team-pokemons {
     display: flex;
     justify-content: center;
-    gap: 10px;
+    gap: var(--sp-3);
 }
 
 .team-slot {
     width: 80px;
     height: 80px;
-    background-color: #e9ecef;
-    border: 2px dashed #adb5bd;
-    border-radius: 10px;
+    background-color: var(--pk-panel-alt);
+    border: 2px dashed var(--pk-blue);
+    border-radius: var(--pk-radius-md);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -110,67 +102,89 @@
     height: 100%;
 }
 
+/* --- Grid de cards de Pokémon disponibles --- */
 .pokemon-grid {
     display: flex;
     justify-content: center;
     flex-wrap: wrap;
-    gap: 20px;
+    gap: var(--sp-5);
     width: 100%;
     max-width: 1200px;
-    padding: 20px;
+    padding: var(--sp-5);
     background-color: transparent;
-    border-radius: 10px;
 }
 
 .pokemon-card {
-    background-color: #ffffff;
-    border: 2px solid #dee2e6;
-    border-radius: 10px;
-    padding: 10px;
+    background-color: var(--pk-panel);
+    border: 3px solid var(--pk-blue);
+    border-radius: var(--pk-radius-md);
+    padding: var(--sp-3);
     text-align: center;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+    box-shadow: var(--pk-shadow-hard);
+    font-family: var(--pk-font-display);
+    color: var(--pk-blue-dark);
+}
+
+.pokemon-card h4 {
+    font-family: var(--pk-font-display);
+    font-size: 0.7rem;
+    color: var(--pk-blue);
+    margin: var(--sp-2) 0;
+}
+
+.pokemon-card p {
+    font-family: var(--pk-font-body);
+    font-size: 1rem;
+    color: var(--pk-blue-dark);
+    margin: 0;
 }
 
 .pokemon-card:hover:not(.disabled) {
-    transform: scale(1.05);
-    box-shadow: 0 0 15px #FFDE00;
-    border-color: #FFDE00;
+    transform: translate(-2px, -2px);
+    border-color: var(--pk-yellow);
+    box-shadow: 8px 8px 0 rgba(255, 203, 5, 0.5);
 }
 
 .pokemon-card.disabled {
     cursor: not-allowed;
-    opacity: 0.6;
-    filter: grayscale(50%);
+    opacity: 0.55;
+    filter: grayscale(60%);
+    box-shadow: 3px 3px 0 rgba(59, 76, 202, 0.25);
 }
 
 .pokemon-card.selected-p1 {
-    border-color: #ff4d4d;
-    box-shadow: 0 0 10px #ff4d4d;
+    border-color: var(--pk-red-soft);
+    box-shadow: 6px 6px 0 rgba(255, 77, 77, 0.5);
 }
 
 .pokemon-card.selected-p2 {
     border-color: #4d4dff;
-    box-shadow: 0 0 10px #4d4dff;
+    box-shadow: 6px 6px 0 rgba(77, 77, 255, 0.5);
 }
 
 .pokemon-card img {
     width: 100px;
     height: 100px;
-    margin-bottom: 10px;
+    margin-bottom: var(--sp-2);
+    image-rendering: pixelated;
 }
 
-.loading, .error-message {
-    font-size: 1.5rem;
-    padding: 20px;
-    background-color: #e9ecef;
-    color: #333;
-    border: 1px solid #ced4da;
-    border-radius: 10px;
+/* --- Mensajes de error / loading dentro de grid --- */
+.loading,
+.error-message {
+    font-family: var(--pk-font-body);
+    font-size: 1.4rem;
+    padding: var(--sp-5);
+    background-color: var(--pk-panel);
+    color: var(--pk-blue-dark);
+    border: 3px solid var(--pk-blue);
+    border-radius: var(--pk-radius-md);
+    box-shadow: var(--pk-shadow-hard);
 }
 
-/* Loading Container Styles */
+/* --- Pantalla de carga inicial --- */
 .loading-container {
     display: flex;
     flex-direction: column;
@@ -181,44 +195,32 @@
 }
 
 .loading-text {
-    font-size: 1.8rem;
-    color: #3b4cca;
-    font-weight: bold;
-    text-shadow: 2px 2px 0 #ffcb05;
+    font-family: var(--pk-font-display);
+    font-size: 1.2rem;
+    color: var(--pk-blue);
+    text-shadow: 2px 2px 0 var(--pk-yellow);
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem;
+    gap: var(--sp-2);
 }
 
 .loading-gif {
     width: 40px;
     height: 40px;
-    animation: bounce 0.8s infinite;
+    animation: pk-bounce 0.8s infinite;
 }
 
-@keyframes bounce {
-    0%, 100% {
-        transform: translateY(0);
-    }
-    50% {
-        transform: translateY(-8px);
-    }
-}
-
-/* Transition Overlay Styles */
+/* --- Overlay de transición al combate --- */
 .transition-overlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    inset: 0;
     background-color: #000000;
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 9999;
-    animation: fadeIn 0.3s ease-in;
+    animation: pk-fade-in 0.3s ease-in;
 }
 
 .transition-image {
@@ -232,13 +234,4 @@
     height: 100vh;
     object-fit: contain;
     background-color: #000000;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
 }

@@ -1,0 +1,41 @@
+/* =========================================================================
+   Panel — contenedor unificado con estilo neobrutalista del proyecto.
+   Reemplaza las 3 variantes de "card" que había repartidas en los CSS
+   originales (trainer-setup-card, team-display, health-bar-container...).
+   ========================================================================= */
+
+.pk-panel {
+    border-radius: var(--pk-radius-lg);
+    box-sizing: border-box;
+    position: relative;
+}
+
+/* --- Variantes de color ---------------------------------------------- */
+
+.pk-panel--light {
+    background-color: var(--pk-panel);
+    border: var(--pk-border);
+    color: var(--pk-blue-dark);
+    box-shadow: var(--pk-shadow-hard);
+}
+
+.pk-panel--dark {
+    background-color: var(--pk-panel-dark-strong);
+    border: var(--pk-border);
+    color: var(--pk-panel);
+    box-shadow: var(--pk-shadow-hard-strong);
+}
+
+.pk-panel--hud {
+    background-color: var(--pk-panel-dark);
+    border: var(--pk-border-hud);
+    color: var(--pk-gold);
+    box-shadow: var(--pk-shadow-soft);
+    border-radius: var(--pk-radius-md);
+}
+
+/* --- Padding --------------------------------------------------------- */
+
+.pk-panel--pad-sm { padding: var(--sp-3); }
+.pk-panel--pad-md { padding: var(--sp-5); }
+.pk-panel--pad-lg { padding: var(--sp-8); }
