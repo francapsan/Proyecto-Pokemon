@@ -118,6 +118,8 @@ const PROJECTILE_TYPE_TO_CLASS = {
     [POKEMON_TYPES.PLANTA]: 'plant',
 };
 
+const THROW_GIF_DURATION_MS = 1400;
+
 // --- COMPONENTE PRINCIPAL: Arena de Combate ---
 const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = null, catalog = null }) => {
     // --- EQUIPOS COMPLETOS (mantienen HP residual de cada Pokémon) ---
@@ -217,8 +219,7 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
             // FASE 1: Lanzamiento del Jugador 1
             setDialogMessage(`¡${p1Name} envía a ${p1Pokemon.name}!`);
             setIntroState(s => ({ ...s, p1Throwing: true }));
-            // Tiempo suficiente para que el gif `lanzar.gif` se reproduzca completo
-            await delay(2200);
+            await delay(THROW_GIF_DURATION_MS);
             // Pokeball "se abre": ocultamos el gif y revelamos el Pokémon
             setIntroState(s => ({ ...s, p1Throwing: false, p1Shown: true }));
             playPokemonCry(p1Pokemon.name);
@@ -227,7 +228,7 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
             // FASE 2: Lanzamiento del Jugador 2
             setDialogMessage(`¡${p2Name} envía a ${p2Pokemon.name}!`);
             setIntroState(s => ({ ...s, p2Throwing: true }));
-            await delay(2200);
+            await delay(THROW_GIF_DURATION_MS);
             setIntroState(s => ({ ...s, p2Throwing: false, p2Shown: true }));
             playPokemonCry(p2Pokemon.name);
             await delay(1100);
@@ -519,7 +520,7 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
                             <img
                                 src={player1Pokemon.sprite}
                                 alt={player1Pokemon.name}
-                                className="pokemon-sprite"
+                                className="pokemon-sprite player-left-sprite"
                             />
                         )}
 
@@ -544,7 +545,7 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
                             <img
                                 src="/gifs/lanzar.gif"
                                 alt="Lanzando Pokémon"
-                                className="pokemon-sprite throwing-sprite"
+                                className="pokemon-sprite throwing-sprite flipped"
                             />
                         )}
                         {!introState.p2Throwing && (introState.p2Shown || introState.started) && (

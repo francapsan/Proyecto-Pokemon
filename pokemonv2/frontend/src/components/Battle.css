@@ -93,14 +93,27 @@
     filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
 }
 
+.pokemon-sprite.player-left-sprite {
+    transform: scaleX(-1);
+}
+
 .pokemon-sprite.throwing-sprite {
     animation: throw-bounce 1s ease-in-out infinite alternate;
     filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
 }
 
+.pokemon-sprite.throwing-sprite.flipped {
+    animation-name: throw-bounce-flipped;
+}
+
 @keyframes throw-bounce {
     from { transform: translateY(0); }
     to   { transform: translateY(-10px); }
+}
+
+@keyframes throw-bounce-flipped {
+    from { transform: translateY(0) scaleX(-1); }
+    to   { transform: translateY(-10px) scaleX(-1); }
 }
 
 /* --- BARRAS DE SALUD / HUD (estilo dorado GameBoy) --- */
