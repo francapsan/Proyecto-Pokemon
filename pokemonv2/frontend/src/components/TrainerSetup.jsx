@@ -184,7 +184,7 @@ const TrainerSetup = () => {
                     {message && (
                         <p className="message">
                             {message}
-                            {isWaiting && <img src="/gifs/carga.gif" alt="Cargando" className="loading-gif" />}
+                            {isWaiting && <img src="/media/carga.gif" alt="Cargando" className="loading-gif" />}
                         </p>
                     )}
                     
@@ -201,17 +201,17 @@ const TrainerSetup = () => {
                 {gender === 'chico' && (
                     <img
                         key="chico"
-                        src="/gifs/trainer-boy.gif"
+                        src="/media/trainer-boy.webp"
                         alt="Entrenador"
-                        className="trainer-gif chico-gif"
+                        className="trainer-img chico-img"
                     />
                 )}
                 {gender === 'chica' && (
                     <img
                         key="chica"
-                        src="/gifs/trainer-girl.gif"
+                        src="/media/trainer-girl.webp"
                         alt="Entrenadora"
-                        className="trainer-gif chica-gif"
+                        className="trainer-img chica-img"
                     />
                 )}
             </div>

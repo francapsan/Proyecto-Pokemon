@@ -124,7 +124,7 @@ pokemonv2/
 │
 ├── frontend/                          # Frontend (React 19 + Vite 8)
 │   ├── public/
-│   │   ├── gifs/                      # Sprites, intro, lanzamiento…
+│   │   ├── media/                     # Sprites, intro, lanzamiento, entrenadores…
 │   │   └── sounds/                    # Música, clics, gritos
 │   └── src/
 │       ├── App.jsx

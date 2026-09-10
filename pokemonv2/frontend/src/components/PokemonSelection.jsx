@@ -205,7 +205,7 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
                     return (
                         <div key={index} className="team-slot">
                             {pokemon ? (
-                                <img src={`/gifs/${pokemon.name.toLowerCase()}.gif`} alt={pokemon.name} title={pokemon.name} />
+                                <img src={`/media/${pokemon.name.toLowerCase()}.gif`} alt={pokemon.name} title={pokemon.name} />
                             ) : (
                                 <div className="empty-slot" />
                             )}
@@ -228,7 +228,7 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
                     <div className="loading-container">
                         <p className="loading-text">
                             Cargando Pokémon...{' '}
-                            <img src="/gifs/carga.gif" alt="Cargando" className="loading-gif" />
+                            <img src="/media/carga.gif" alt="Cargando" className="loading-gif" />
                         </p>
                     </div>
                 </div>
@@ -260,7 +260,7 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
                     <div className="transition-overlay">
                         <video
                             ref={transitionVideoRef}
-                            src="/gifs/entrada.mp4"
+                            src="/media/entrada.mp4"
                             className="transition-video"
                             autoPlay
                             playsInline
@@ -307,7 +307,7 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
                             className={cardClass}
                             onClick={() => !isDisabled && handlePokemonSelect(pokemon)}
                         >
-                            <img src={`/gifs/${pokemon.name.toLowerCase()}.gif`} alt={pokemon.name} />
+                            <img src={`/media/${pokemon.name.toLowerCase()}.gif`} alt={pokemon.name} />
                             <h4>{pokemon.name}</h4>
                             <p>Tipo: {TYPE_LABELS[pokemon.type] || pokemon.type}</p>
                         </div>

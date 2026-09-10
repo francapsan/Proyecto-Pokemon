@@ -125,7 +125,7 @@
 }
 
 /* --- Entrenadores decorativos animados (chico/chica) --- */
-.trainer-gif {
+.trainer-img {
     position: absolute;
     top: 50%;
     height: auto;
@@ -138,12 +138,12 @@
     pointer-events: none;
 }
 
-.chico-gif {
+.chico-img {
     left: 2vw;
     animation-name: slideInLeft;
 }
 
-.chica-gif {
+.chica-img {
     right: 2vw;
     animation-name: slideInRight;
 }

@@ -45,6 +45,7 @@ VITE_API_URL=http://localhost:9090
 | `npm test` | Ejecuta la suite Vitest una vez (modo CI) |
 | `npm run test:watch` | Vitest en modo watch |
 | `npm run test:ui` | Vitest con interfaz gráfica |
+| `npm run media:webp` | Convierte los PNG/JPG de `public/media/` a WebP (usa `-- --replace` para borrar los originales) |
 
 ---
 
@@ -53,13 +54,13 @@ VITE_API_URL=http://localhost:9090
 ```
 frontend/
 ├── public/
-│   ├── gifs/
-│   │   ├── charizard.gif / blastoise.gif / venusaur.gif   # Sprites de Pokémon
-│   │   ├── trainer-boy.gif / trainer-girl.gif              # Entrenadores
-│   │   ├── espera.gif                                      # Pokeball en espera (cuadro pequeño)
-│   │   ├── lanzar.gif                                      # Lanzamiento de Pokémon
-│   │   ├── entrada.mp4                                     # Vídeo de transición
-│   │   └── carga.gif                                       # Indicador de carga
+│   ├── media/
+│   │   ├── charizard.gif / blastoise.gif / venusaur.gif       # Sprites animados de Pokémon
+│   │   ├── trainer-boy.webp / trainer-girl.webp               # Entrenadores (WebP, ~115 KB c/u)
+│   │   ├── espera.gif                                          # Pokeball en espera (cuadro pequeño)
+│   │   ├── lanzar.gif                                          # Lanzamiento de Pokémon
+│   │   ├── entrada.mp4                                         # Vídeo de transición
+│   │   └── carga.gif                                           # Indicador de carga
 │   ├── sounds/
 │   │   ├── Theme.mp3                                       # Música de setup/selección
 │   │   ├── combate.m4a                                     # Música de la arena

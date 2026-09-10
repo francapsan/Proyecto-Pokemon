@@ -42,7 +42,7 @@ const AliveIndicatorBox = ({ aliveCount, trainerName }) => {
                 {Array.from({ length: aliveCount }).map((_, idx) => (
                     <img
                         key={idx}
-                        src="/gifs/espera.gif"
+                        src="/media/espera.gif"
                         alt=""
                         className="alive-indicator-icon"
                     />
@@ -97,7 +97,7 @@ const buildPokemonState = (basePokemon, fallbackName, catalog) => {
         attacks: data.attacks,
         hp: data.hp,
         maxHp: data.hp,
-        sprite: `/gifs/${data.name.toLowerCase()}.gif`,
+        sprite: `/media/${data.name.toLowerCase()}.gif`,
     };
 };
 
@@ -511,7 +511,7 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
                     >
                         {introState.p1Throwing && (
                             <img
-                                src="/gifs/lanzar.gif"
+                                src="/media/lanzar.gif"
                                 alt="Lanzando Pokémon"
                                 className="pokemon-sprite throwing-sprite"
                             />
@@ -543,7 +543,7 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
                     >
                         {introState.p2Throwing && (
                             <img
-                                src="/gifs/lanzar.gif"
+                                src="/media/lanzar.gif"
                                 alt="Lanzando Pokémon"
                                 className="pokemon-sprite throwing-sprite flipped"
                             />
