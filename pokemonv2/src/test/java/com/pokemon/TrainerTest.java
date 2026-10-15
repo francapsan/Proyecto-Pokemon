@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 class TrainerTest {
 
     private Pokemon makePokemon(String name, int hp) {
-        return new Pokemon(name, PokemonType.NORMAL, hp, 50);
+        return TestPokemons.simple(name, hp, PokemonType.NORMAL);
     }
 
     @Test
@@ -48,7 +48,7 @@ class TrainerTest {
         t.addToTeam(alive);
         assertTrue(t.hasAvailablePokemon());
 
-        Attack hit = new Attack("Golpe", 10, PokemonType.NORMAL);
+        Attack hit = new Attack("Golpe", 200, PokemonType.NORMAL, AttackCategory.FISICO);
         alive.receiveDamage(hit, alive);
         assertFalse(t.hasAvailablePokemon());
     }

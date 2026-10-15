@@ -8,6 +8,36 @@
         "http://localhost:3000",
         "http://localhost:5173"
       ]
+    },
+    {
+      "name": "pokeapi.base-url",
+      "type": "java.lang.String",
+      "description": "URL base de PokéAPI v2.",
+      "defaultValue": "https://pokeapi.co/api/v2"
+    },
+    {
+      "name": "pokeapi.pokemon-ids",
+      "type": "java.util.List<java.lang.Integer>",
+      "description": "IDs de la Pokédex nacional que forman el catálogo, en el orden en que se muestran.",
+      "defaultValue": [9, 6, 3]
+    },
+    {
+      "name": "pokeapi.max-pokedex-id",
+      "type": "java.lang.Integer",
+      "description": "Último ID de la Pokédex nacional entre los que se sortean los Pokémon aleatorios.",
+      "defaultValue": 1025
+    },
+    {
+      "name": "pokeapi.connect-timeout",
+      "type": "java.time.Duration",
+      "description": "Tiempo máximo para conectar con PokéAPI.",
+      "defaultValue": "5s"
+    },
+    {
+      "name": "pokeapi.read-timeout",
+      "type": "java.time.Duration",
+      "description": "Tiempo máximo de espera de cada respuesta de PokéAPI.",
+      "defaultValue": "10s"
     }
   ]
 }

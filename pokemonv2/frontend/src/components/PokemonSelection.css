@@ -125,6 +125,7 @@
     box-shadow: var(--pk-shadow-hard);
     font-family: var(--pk-font-display);
     color: var(--pk-blue-dark);
+    width: 180px;
 }
 
 .pokemon-card h4 {
@@ -132,6 +133,7 @@
     font-size: 0.7rem;
     color: var(--pk-blue);
     margin: var(--sp-2) 0;
+    overflow-wrap: anywhere;
 }
 
 .pokemon-card p {
@@ -164,10 +166,20 @@
     box-shadow: 6px 6px 0 rgba(77, 77, 255, 0.5);
 }
 
-.pokemon-card img {
-    width: 100px;
-    height: 100px;
+/* Misma ampliación para todos los sprites (ver .pokemon-sprite-scaled en Battle.css);
+   la caja de altura fija mantiene los nombres alineados entre tarjetas. */
+.pokemon-card-sprite {
+    height: 120px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
     margin-bottom: var(--sp-2);
+}
+
+.pokemon-card-sprite img {
+    max-width: 80px;
+    max-height: 80px;
+    zoom: 1.5;
     image-rendering: pixelated;
 }
 

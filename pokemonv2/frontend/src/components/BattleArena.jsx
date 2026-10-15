@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import './Battle.css';
 import { AUDIO_CONFIG } from '../constants/config';
-import { POKEMON_CATALOG } from '../constants/pokemons';
-import { getTypeMultiplier, getEffectivenessMessage, POKEMON_TYPES } from '../constants/typeChart';
+import { getEffectivenessMessage, POKEMON_TYPES, TYPE_LABELS } from '../constants/typeChart';
+import { calculateDamage, ATTACK_CATEGORIES } from '../constants/damage';
+import { playCry } from '../utils/media';
 import PageShell from './ui/PageShell';
 import Panel from './ui/Panel';
 import Button from './ui/Button';
@@ -84,31 +85,42 @@ const TypewriterText = ({ text, speed = 40 }) => {
     return <p>{displayedText}</p>;
 };
 
-// Construye el estado inicial de un Pokémon a partir de su nombre,
-// resolviendo type, speed, ataques y sprite desde el catálogo dado
-// (con fallback al catálogo local si no viene del backend).
-const buildPokemonState = (basePokemon, fallbackName, catalog) => {
-    const source = catalog && Object.keys(catalog).length > 0 ? catalog : POKEMON_CATALOG;
-    const data = source[basePokemon?.name] || source[fallbackName];
+// Construye el estado inicial de un Pokémon, resolviendo tipos, stats,
+// ataques y sprite desde el catálogo cargado en la selección.
+const buildPokemonState = (basePokemon, catalog) => {
+    const data = catalog?.[basePokemon.name] ?? basePokemon;
     return {
         name: data.name,
-        type: data.type,
+        types: data.types,
+        attack: data.attack,
+        defense: data.defense,
+        specialAttack: data.specialAttack,
+        specialDefense: data.specialDefense,
         speed: data.speed,
         attacks: data.attacks,
         hp: data.hp,
         maxHp: data.hp,
-        sprite: `/media/${data.name.toLowerCase()}.gif`,
+        sprite: data.sprite ?? null,
+        cry: data.cry ?? null,
     };
+};
+
+// Variante de color del botón según el tipo. Los tipos sin color propio usan el gris de Normal.
+const TYPE_TO_VARIANT = {
+    [POKEMON_TYPES.FUEGO]: 'type-fire',
+    [POKEMON_TYPES.AGUA]: 'type-water',
+    [POKEMON_TYPES.PLANTA]: 'type-plant',
+};
+const typeVariant = (type) => TYPE_TO_VARIANT[type] || 'type-normal';
+const typeLabel = (type) => TYPE_LABELS[type] || type;
+const CATEGORY_LABELS = {
+    [ATTACK_CATEGORIES.FISICO]: 'Físico',
+    [ATTACK_CATEGORIES.ESPECIAL]: 'Especial',
 };
 
 // Construye un equipo completo (array de estados de Pokémon).
 // Se usa para mantener el HP residual de cada Pokémon entre cambios.
-const buildTeam = (teamArr, fallbackName, catalog) => {
-    const source = (Array.isArray(teamArr) && teamArr.length > 0)
-        ? teamArr
-        : [{ name: fallbackName }];
-    return source.map(p => buildPokemonState(p, fallbackName, catalog));
-};
+const buildTeam = (teamArr, catalog) => teamArr.map(p => buildPokemonState(p, catalog));
 
 // Mapeo de tipo del ataque a clase CSS del proyectil.
 // Los ataques NORMAL son cuerpo a cuerpo (sin proyectil).
@@ -123,8 +135,8 @@ const THROW_GIF_DURATION_MS = 1400;
 // --- COMPONENTE PRINCIPAL: Arena de Combate ---
 const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = null, catalog = null }) => {
     // --- EQUIPOS COMPLETOS (mantienen HP residual de cada Pokémon) ---
-    const [player1Team, setPlayer1Team] = useState(() => buildTeam(teams[1], 'Charizard', catalog));
-    const [player2Team, setPlayer2Team] = useState(() => buildTeam(teams[2], 'Blastoise', catalog));
+    const [player1Team, setPlayer1Team] = useState(() => buildTeam(teams[1], catalog));
+    const [player2Team, setPlayer2Team] = useState(() => buildTeam(teams[2], catalog));
 
     // --- ÍNDICE DEL POKÉMON ACTIVO DE CADA EQUIPO ---
     const [player1Index, setPlayer1Index] = useState(0);
@@ -136,8 +148,8 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
 
     // --- TURNO ACTIVO: empieza el más rápido (a igual velocidad, jugador 1) ---
     const [currentTurn, setCurrentTurn] = useState(() => {
-        const p1 = buildPokemonState(teams[1]?.[0], 'Charizard', catalog);
-        const p2 = buildPokemonState(teams[2]?.[0], 'Blastoise', catalog);
+        const p1 = buildPokemonState(teams[1][0], catalog);
+        const p2 = buildPokemonState(teams[2][0], catalog);
         return p1.speed >= p2.speed ? 'player1' : 'player2';
     });
 
@@ -173,19 +185,7 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
 
     const delay = (ms) => new Promise(res => setTimeout(res, ms));
 
-    // Reproduce el grito de un Pokémon
-    const playPokemonCry = (pokemonName) => {
-        if (!pokemonName) return;
-        try {
-            const cry = new Audio(`/sounds/Grito_de_${pokemonName}.ogg`);
-            cry.volume = AUDIO_CONFIG.VOLUME?.SFX ?? 0.7;
-            cry.play().catch(e => {
-                console.warn(`No se pudo reproducir el grito de ${pokemonName}:`, e);
-            });
-        } catch (e) {
-            console.warn(`Error inicializando el grito de ${pokemonName}:`, e);
-        }
-    };
+    const playPokemonCry = (pokemon) => playCry(pokemon, AUDIO_CONFIG.VOLUME?.SFX ?? 0.7);
 
     const getTrainerName = (playerId) => {
         const idx = playerId === 'player1' ? 0 : 1;
@@ -222,7 +222,7 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
             await delay(THROW_GIF_DURATION_MS);
             // Pokeball "se abre": ocultamos el gif y revelamos el Pokémon
             setIntroState(s => ({ ...s, p1Throwing: false, p1Shown: true }));
-            playPokemonCry(p1Pokemon.name);
+            playPokemonCry(p1Pokemon);
             await delay(1100);
 
             // FASE 2: Lanzamiento del Jugador 2
@@ -230,7 +230,7 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
             setIntroState(s => ({ ...s, p2Throwing: true }));
             await delay(THROW_GIF_DURATION_MS);
             setIntroState(s => ({ ...s, p2Throwing: false, p2Shown: true }));
-            playPokemonCry(p2Pokemon.name);
+            playPokemonCry(p2Pokemon);
             await delay(1100);
 
             // FASE 3: Intro completada → la batalla normal toma el control
@@ -268,7 +268,7 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
         const ownerName = getTrainerName(defenderId);
 
         // 1. Sonido + mensaje + animación de fainting
-        playPokemonCry(defenderPokemon.name);
+        playPokemonCry(defenderPokemon);
         setDialogMessage(`¡${defenderPokemon.name} se ha debilitado!`);
         setAnimationState({
             attacking: null,
@@ -321,11 +321,10 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
         const defenderId = isP1Attacking ? 'player2' : 'player1';
         const defenderIndex = isP1Attacking ? player2Index : player1Index;
 
-        // Cálculo de daño según la tabla de tipos
-        const multiplier = getTypeMultiplier(attack.type, defender.type);
-        const finalDamage = Math.floor(attack.damage * multiplier);
-        const newHp = Math.max(0, defender.hp - finalDamage);
-        const effectivenessMsg = getEffectivenessMessage(multiplier);
+        // Cálculo de daño: stats de ambos, STAB y tabla de tipos (doble tipo incluido)
+        const { damage, effectiveness } = calculateDamage(attack, attacker, defender);
+        const newHp = Math.max(0, defender.hp - damage);
+        const effectivenessMsg = getEffectivenessMessage(effectiveness);
 
         // 1. Anunciar el ataque
         setDialogMessage(`¡${attacker.name} usó ${attack.name}!`);
@@ -433,7 +432,7 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
             arenaEffect: null,
             fainting: null,
         });
-        playPokemonCry(targetPokemon.name);
+        playPokemonCry(targetPokemon);
         setDialogMessage(`¡Adelante, ${targetPokemon.name}!`);
         await delay(1500);
 
@@ -520,7 +519,7 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
                             <img
                                 src={player1Pokemon.sprite}
                                 alt={player1Pokemon.name}
-                                className="pokemon-sprite player-left-sprite"
+                                className="pokemon-sprite pokemon-sprite-scaled player-left-sprite"
                             />
                         )}
 
@@ -552,7 +551,7 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
                             <img
                                 src={player2Pokemon.sprite}
                                 alt={player2Pokemon.name}
-                                className="pokemon-sprite"
+                                className="pokemon-sprite pokemon-sprite-scaled"
                             />
                         )}
 
@@ -610,26 +609,20 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
                     <div className="attack-buttons">
                         {activeAttacker.attacks.map((attack) => {
                             const typeKey = attack.type.toLowerCase();
-                            const variantMap = {
-                                fuego: 'type-fire',
-                                agua: 'type-water',
-                                planta: 'type-plant',
-                                normal: 'type-normal',
-                            };
-                            const variant = variantMap[typeKey] || 'type-normal';
+                            const category = CATEGORY_LABELS[attack.category] || attack.category;
                             return (
                                 <Button
                                     key={attack.name}
-                                    variant={variant}
+                                    variant={typeVariant(attack.type)}
                                     size="sm"
                                     className={`attack-btn attack-type-${typeKey}`}
                                     onClick={() => executeAttack(attack)}
                                     disabled={!showAttackPanel}
-                                    title={`Daño base: ${attack.damage} · Tipo: ${attack.type}`}
+                                    title={`Potencia: ${attack.power} · Tipo: ${typeLabel(attack.type)} · ${category}`}
                                 >
                                     <span className="attack-name">{attack.name}</span>
                                     <span className="attack-meta">
-                                        {attack.type} · {attack.damage}
+                                        {typeLabel(attack.type)} · {attack.power}
                                     </span>
                                 </Button>
                             );
@@ -638,18 +631,11 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
                 ) : (
                     <div className="switch-options">
                         {switchableOptions.map(({ pokemon, index }) => {
-                            const typeKey = pokemon.type.toLowerCase();
-                            const variantMap = {
-                                fuego: 'type-fire',
-                                agua: 'type-water',
-                                planta: 'type-plant',
-                                normal: 'type-normal',
-                            };
-                            const variant = variantMap[typeKey] || 'type-normal';
+                            const typeKey = pokemon.types[0].toLowerCase();
                             return (
                                 <Button
                                     key={`${pokemon.name}-${index}`}
-                                    variant={variant}
+                                    variant={typeVariant(pokemon.types[0])}
                                     size="sm"
                                     className={`switch-option attack-type-${typeKey}`}
                                     onClick={() => performSwitch(index)}
@@ -663,7 +649,7 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
                                     <div className="switch-option-info">
                                         <span className="attack-name">{pokemon.name}</span>
                                         <span className="attack-meta">
-                                            {pokemon.type} · HP {pokemon.hp}/{pokemon.maxHp}
+                                            {pokemon.types.map(typeLabel).join('/')} · HP {pokemon.hp}/{pokemon.maxHp}
                                         </span>
                                     </div>
                                 </Button>

@@ -1,27 +1,36 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './PokemonSelection.css';
 import { GAME_CONFIG, AUDIO_CONFIG } from '../constants/config';
-import { POKEMON_LIST } from '../constants/pokemons';
 import { pokemonService } from '../services/pokemonService';
 import { TYPE_LABELS } from '../constants/typeChart';
+import { playCry } from '../utils/media';
+import { splitChoices } from '../utils/pokemonChoices';
 import BattleArena from './BattleArena';
 import PageShell from './ui/PageShell';
 import Panel from './ui/Panel';
+import Button from './ui/Button';
 
 // Normaliza la respuesta del backend (`maxHp`) al formato interno (`hp`)
 // que ya usan el resto de componentes.
 const normalizePokemon = (p) => ({
     name: p.name,
-    type: p.type,
+    types: p.types ?? [],
     hp: p.maxHp ?? p.hp,
+    attack: p.attack,
+    defense: p.defense,
+    specialAttack: p.specialAttack,
+    specialDefense: p.specialDefense,
     speed: p.speed,
     attacks: p.attacks ?? [],
+    sprite: p.sprite ?? null,
+    cry: p.cry ?? null,
 });
 const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, isMusicPlaying: sharedIsMusicPlaying, setIsMusicPlaying: setSharedIsMusicPlaying }) => {
-    const [pokemons, setPokemons] = useState([]);
+    const [choices, setChoices] = useState({ 1: [], 2: [] });
     const [catalog, setCatalog] = useState({});
     const [isLoading, setIsLoading] = useState(true);
-    const [error] = useState(null);
+    const [error, setError] = useState(null);
+    const [loadAttempt, setLoadAttempt] = useState(0);
     
     const [teams, setTeams] = useState({ 1: [], 2: [] });
     const [message, setMessage] = useState('');
@@ -72,21 +81,30 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
         const applyCatalog = (list) => {
             if (cancelled) return;
             const normalized = list.map(normalizePokemon);
-            setPokemons(normalized.map(({ name, type, hp, speed }) => ({ name, type, hp, speed })));
+            setChoices(splitChoices(normalized, GAME_CONFIG.POKEMON_CHOICES_PER_PLAYER));
             const byName = Object.fromEntries(normalized.map((p) => [p.name, p]));
             setCatalog(byName);
             setIsLoading(false);
         };
 
-        pokemonService.listPokemons()
+        // Una sola petición con el doble de Pokémon: así los dos jugadores no comparten opciones.
+        pokemonService.listRandomPokemons(GAME_CONFIG.POKEMON_CHOICES_PER_PLAYER * 2)
             .then((data) => applyCatalog(data))
             .catch((err) => {
-                console.warn('Fallback al catálogo local:', err.message);
-                applyCatalog(POKEMON_LIST);
+                if (cancelled) return;
+                console.error('No se pudieron cargar los Pokémon:', err.message);
+                setError('No se pudieron cargar los Pokémon. Comprueba que el servidor está en marcha y vuelve a intentarlo.');
+                setIsLoading(false);
             });
 
         return () => { cancelled = true; };
-    }, []);
+    }, [loadAttempt]);
+
+    const retryLoad = () => {
+        setError(null);
+        setIsLoading(true);
+        setLoadAttempt((attempt) => attempt + 1);
+    };
 
     useEffect(() => {
         if (trainers.length < 2) return;
@@ -161,13 +179,7 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
         const currentTeam = teams[whoseTurn];
         if (currentTeam.find(p => p.name === pokemon.name)) return;
 
-        // Reproducir el sonido del Pokémon
-        const pokemonSoundName = `Grito_de_${pokemon.name}`;
-        const audioElement = new Audio(`/sounds/${pokemonSoundName}.ogg`);
-        audioElement.volume = AUDIO_CONFIG.VOLUME.SFX || 0.7;
-        audioElement.play().catch(e => {
-            console.warn(`No se pudo reproducir el sonido para ${pokemon.name}:`, e);
-        });
+        playCry(pokemon, AUDIO_CONFIG.VOLUME.SFX || 0.7);
 
         setTeams(prevTeams => ({
             ...prevTeams,
@@ -205,7 +217,7 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
                     return (
                         <div key={index} className="team-slot">
                             {pokemon ? (
-                                <img src={`/media/${pokemon.name.toLowerCase()}.gif`} alt={pokemon.name} title={pokemon.name} />
+                                <img src={pokemon.sprite} alt={pokemon.name} title={pokemon.name} />
                             ) : (
                                 <div className="empty-slot" />
                             )}
@@ -230,6 +242,25 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
                             Cargando Pokémon...{' '}
                             <img src="/media/carga.gif" alt="Cargando" className="loading-gif" />
                         </p>
+                    </div>
+                </div>
+            </PageShell>
+        );
+    }
+
+    if (error) {
+        return (
+            <PageShell
+                currentStep="selection"
+                isMusicPlaying={isMusicPlaying}
+                onToggleMusic={toggleBackgroundMusic}
+            >
+                <div className="pokemon-selection-container">
+                    <div className="loading-container">
+                        <p className="error-message">{error}</p>
+                        <Button variant="primary" size="lg" onClick={retryLoad}>
+                            Reintentar
+                        </Button>
                     </div>
                 </div>
             </PageShell>
@@ -273,7 +304,6 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
                     </div>
                 )}
                 <h2 className="pokemon-selection-heading">Elige tu equipo</h2>
-                {error && <p className="error-message">{error}</p>}
                 <p className="message">{message}</p>
 
             <div className="teams-container">
@@ -282,7 +312,7 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
             </div>
 
             <div className="pokemon-grid">
-                {pokemons.map(pokemon => {
+                {choices[whoseTurn].map(pokemon => {
                     const isAlreadyInP1Team = !!player1Team.find(p => p.name === pokemon.name);
                     const isAlreadyInP2Team = !!player2Team.find(p => p.name === pokemon.name);
 
@@ -307,9 +337,11 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
                             className={cardClass}
                             onClick={() => !isDisabled && handlePokemonSelect(pokemon)}
                         >
-                            <img src={`/media/${pokemon.name.toLowerCase()}.gif`} alt={pokemon.name} />
+                            <div className="pokemon-card-sprite">
+                                <img src={pokemon.sprite} alt={pokemon.name} />
+                            </div>
                             <h4>{pokemon.name}</h4>
-                            <p>Tipo: {TYPE_LABELS[pokemon.type] || pokemon.type}</p>
+                            <p>Tipo: {pokemon.types.map((type) => TYPE_LABELS[type] || type).join(' / ')}</p>
                         </div>
                     );
                 })}

@@ -93,6 +93,18 @@
     filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.3));
 }
 
+/* Los GIF de Showdown vienen recortados a cada Pokémon: se muestran a su tamaño
+   natural con la misma ampliación para todos (zoom), y el tope en max-* (antes del
+   zoom) evita que los más grandes se salgan de la plataforma. */
+.pokemon-sprite.pokemon-sprite-scaled {
+    width: auto;
+    height: auto;
+    max-width: 100px;
+    max-height: 100px;
+    zoom: 2;
+    margin-bottom: calc(var(--sp-3) / 2);
+}
+
 .pokemon-sprite.player-left-sprite {
     transform: scaleX(-1);
 }

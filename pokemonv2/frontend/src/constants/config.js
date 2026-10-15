@@ -3,7 +3,8 @@ export const API_CONFIG = {
     BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:8080',
     ENDPOINTS: {
         TRAINERS: '/api/trainers/create',
-        POKEMONS: '/api/pokemons'
+        POKEMONS: '/api/pokemons',
+        RANDOM_POKEMONS: '/api/pokemons/random'
     }
 };
 
@@ -23,5 +24,6 @@ export const AUDIO_CONFIG = {
 export const GAME_CONFIG = {
     MAX_PLAYERS: 2,
     PLAYER_SETUP_DELAY: 4000, // ms
-    TEAM_SIZE: 3
+    TEAM_SIZE: 3,
+    POKEMON_CHOICES_PER_PLAYER: 10
 };
