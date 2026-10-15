@@ -25,7 +25,7 @@ const normalizePokemon = (p) => ({
     sprite: p.sprite ?? null,
     cry: p.cry ?? null,
 });
-const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, isMusicPlaying: sharedIsMusicPlaying, setIsMusicPlaying: setSharedIsMusicPlaying }) => {
+const PokemonSelection = ({ trainers, backgroundMusicRef, isMusicPlaying: sharedIsMusicPlaying, setIsMusicPlaying: setSharedIsMusicPlaying }) => {
     const [choices, setChoices] = useState({ 1: [], 2: [] });
     const [catalog, setCatalog] = useState({});
     const [isLoading, setIsLoading] = useState(true);
@@ -33,11 +33,12 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
     const [loadAttempt, setLoadAttempt] = useState(0);
     
     const [teams, setTeams] = useState({ 1: [], 2: [] });
-    const [message, setMessage] = useState('');
     const [isMusicPlaying, setIsMusicPlaying] = useState(sharedIsMusicPlaying !== undefined ? sharedIsMusicPlaying : true);    
     const [showTransition, setShowTransition] = useState(false);
     const [showBattle, setShowBattle] = useState(false);
-    const backgroundMusic = useRef(sharedBackgroundMusic);
+    // La música de fondo la crea TrainerSetup; si se monta sin ella, se crea aquí.
+    const ownBackgroundMusic = useRef(null);
+    const backgroundMusic = backgroundMusicRef ?? ownBackgroundMusic;
     const battleMusic = useRef(null);
     const transitionVideoRef = useRef(null);
     // Flags para garantizar que cada paso de la transición solo se ejecuta
@@ -73,7 +74,7 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
                 console.error("Error al reanudar la música:", e);
             });
         }
-    }, [isMusicPlaying]);
+    }, [isMusicPlaying, backgroundMusic]);
 
     useEffect(() => {
         let cancelled = false;
@@ -106,20 +107,12 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
         setLoadAttempt((attempt) => attempt + 1);
     };
 
-    useEffect(() => {
-        if (trainers.length < 2) return;
-
-        const p1Name = trainers[0]?.name || 'Jugador 1';
-        const p2Name = trainers[1]?.name || 'Jugador 2';
-
-        if (isSelectionOver) {
-            setMessage("¡Todos los equipos están listos! ¡Preparaos para la batalla!");
-        } else if (whoseTurn === 1) {
-            setMessage(`${p1Name}: Elige tus 3 Pokémon (${player1Team.length}/${GAME_CONFIG.TEAM_SIZE})`);
-        } else {
-            setMessage(`${p2Name}: Elige tus 3 Pokémon (${player2Team.length}/${GAME_CONFIG.TEAM_SIZE})`);
-        }
-    }, [whoseTurn, isSelectionOver, player1Team.length, player2Team.length, trainers]);
+    const turnMessage = () => {
+        if (trainers.length < 2) return '';
+        if (isSelectionOver) return '¡Todos los equipos están listos! ¡Preparaos para la batalla!';
+        const name = trainers[whoseTurn - 1]?.name || `Jugador ${whoseTurn}`;
+        return `${name}: Elige tus 3 Pokémon (${teams[whoseTurn].length}/${GAME_CONFIG.TEAM_SIZE})`;
+    };
 
     // Efecto para iniciar la transición cuando se completa la selección
     // (solo una vez, aunque el componente se re-renderice)
@@ -129,26 +122,19 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
             console.log('✅ Selección completa - esperando 3 segundos...');
             const initialWaitTimer = setTimeout(() => {
                 console.log('✅ Mostrando vídeo de entrada...');
+                // El .mp4 tiene su propio audio: pausamos la música de fondo. La de combate
+                // no arranca hasta handleTransitionEnd para que no se solapen.
+                if (backgroundMusic.current && !backgroundMusic.current.paused) {
+                    backgroundMusic.current.pause();
+                    setIsMusicPlaying(false);
+                    setSharedIsMusicPlaying?.(false);
+                }
                 setShowTransition(true);
             }, 3000);
 
             return () => clearTimeout(initialWaitTimer);
         }
-    }, [isSelectionOver]);
-
-    // Cuando aparece el vídeo de transición:
-    //   - Pausamos la música de fondo (el .mp4 tiene su propio audio).
-    //   - NO arrancamos la música de combate todavía: lo hará handleTransitionEnd
-    //     cuando el .mp4 termine para que no se solapen audios.
-    useEffect(() => {
-        if (showTransition && backgroundMusic.current && !backgroundMusic.current.paused) {
-            backgroundMusic.current.pause();
-            setIsMusicPlaying(false);
-            if (setSharedIsMusicPlaying) {
-                setSharedIsMusicPlaying(false);
-            }
-        }
-    }, [showTransition]);
+    }, [isSelectionOver, backgroundMusic, setSharedIsMusicPlaying]);
 
     // Se dispara cuando termina el vídeo de entrada (o el fallback de seguridad).
     // Arranca la música de combate y muestra la arena.
@@ -273,7 +259,7 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
             <BattleArena 
                 trainers={trainers} 
                 teams={teams} 
-                battleMusic={battleMusic.current} 
+                battleMusicRef={battleMusic} 
                 catalog={catalog}
             />
         );
@@ -304,7 +290,7 @@ const PokemonSelection = ({ trainers, backgroundMusic: sharedBackgroundMusic, is
                     </div>
                 )}
                 <h2 className="pokemon-selection-heading">Elige tu equipo</h2>
-                <p className="message">{message}</p>
+                <p className="message">{turnMessage()}</p>
 
             <div className="teams-container">
                 {renderTeam(player1Team, trainers[0])}

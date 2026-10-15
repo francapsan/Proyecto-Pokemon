@@ -191,13 +191,12 @@ npm run test:ui       # UI navegable
 npm run lint
 ```
 
-ESLint 9 con `eslint-plugin-react-hooks` y `eslint-plugin-react-refresh`. Actualmente hay **6 errores y 3 warnings pre-existentes** en `BattleArena.jsx`, `PokemonSelection.jsx` y `TrainerSetup.jsx` — categorías `react-hooks/set-state-in-effect` y `react-hooks/refs`. El CI los ejecuta con `continue-on-error: true` para no bloquear PRs mientras se refactoriza la gestión de audio.
+ESLint 9 con `eslint-plugin-react-hooks` y `eslint-plugin-react-refresh`. El código pasa sin errores ni warnings y el CI falla si aparece alguno. Las referencias de audio (`backgroundMusicRef`, `battleMusicRef`) se pasan como refs y sólo se leen en efectos y handlers, nunca durante el render.
 
 ---
 
 ## Notas y mejoras futuras
 
-- Refactorizar los componentes para eliminar los lints de `react-hooks/refs` (pasar refs como props) y `set-state-in-effect` (mover lógica a event handlers o a `useSyncExternalStore`).
 - `lanzar.gif` se reproduce a la velocidad nativa del gif. Para tener control real (slow-mo, sincronización con `onEnded`), conviene convertirlo a un `.mp4` y usar `<video playbackRate={0.5}>`.
 - Migración a **TypeScript** pendiente.
 - Añadir tests de integración de componentes con Testing Library (por ejemplo `TrainerSetup` completo con `fetch` mockeado).

@@ -105,7 +105,7 @@ Cada especie se descarga una sola vez (la primera llamada tarda ~2 s, el resto s
 - Audio HTML5 nativo (sin librerías externas) y vídeo HTML5 para la intro.
 
 ### DevOps
-- **GitHub Actions**: dos jobs (backend + frontend) con caché Maven/npm; el CI ejecuta tests, lint y build en cada push/PR.
+- **GitHub Actions**: dos jobs (backend + frontend) con caché Maven/npm; el CI ejecuta tests, lint y build en cada push/PR. El workflow vive en la raíz del repositorio (`../.github/workflows/ci.yml`), que es donde GitHub lo busca.
 - **PowerShell** para automatización local (`start-dev.ps1`, `watch-tests.ps1`).
 
 ---
@@ -176,7 +176,6 @@ pokemonv2/
 │       └── test/
 │           └── setup.js               # setup Vitest + jest-dom
 │
-├── .github/workflows/ci.yml           # CI (backend + frontend)
 ├── watch-tests.ps1                    # Watcher: recompila y lanza `mvn test` al detectar cambios
 ├── test-helpers.ps1                   # Utilidades PS compartidas
 ├── start-dev.ps1                      # Arranca backend + frontend en dos ventanas
@@ -298,7 +297,6 @@ Errores 400 con mensaje legible vienen del `GlobalExceptionHandler`.
 
 ## Techdebt / próximas mejoras
 
-- **Lint del frontend**: quedan 6 errores + 3 warnings pre-existentes (`react-hooks/set-state-in-effect` y `react-hooks/refs`). El CI ejecuta el lint con `continue-on-error: true` hasta refactorizarlo.
 - **EvoSuite retirado**: la versión 1.0.6 (última disponible) no soporta Java 25. Si se necesita generación automática de tests, valorar reemplazarlo por una estrategia asistida por IA o volver a introducir Randoop con toolchain de un JDK compatible.
 - Migrar frontend a **TypeScript**.
 - Convertir `lanzar.gif` a vídeo `.mp4` para poder controlar la velocidad con `playbackRate`.

@@ -21,7 +21,6 @@ import com.pokemon.pokeapi.PokeApiModels.PokemonResponse;
 import com.pokemon.pokeapi.PokeApiModels.Sprites;
 import com.pokemon.pokeapi.PokeApiModels.SpeciesResponse;
 import com.pokemon.pokeapi.PokeApiModels.StatEntry;
-import com.pokemon.pokeapi.PokeApiModels.TypeSlot;
 
 /**
  * Traduce las respuestas de PokéAPI al modelo del juego.
@@ -89,7 +88,7 @@ public final class PokeApiMapper {
     /** Tipos ordenados por slot; se descartan los que no existen en combate. */
     static List<PokemonType> types(PokemonResponse pokemon) {
         List<PokemonType> types = pokemon.types().stream()
-                .sorted(Comparator.comparingInt(TypeSlot::slot))
+                .sorted(Comparator.comparingInt(typeSlot -> typeSlot.slot()))
                 .flatMap(slot -> PokemonType.fromApiName(slot.type().name()).stream())
                 .toList();
         if (types.isEmpty()) {

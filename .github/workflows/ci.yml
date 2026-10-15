@@ -14,6 +14,9 @@ jobs:
   backend:
     name: Backend (Java 25 + Maven)
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: pokemonv2
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -24,6 +27,7 @@ jobs:
           java-version: '25'
           distribution: 'temurin'
           cache: maven
+          cache-dependency-path: pokemonv2/pom.xml
 
       - name: Compile
         run: mvn -B -ntp compile
@@ -36,7 +40,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: surefire-reports
-          path: target/surefire-reports/
+          path: pokemonv2/target/surefire-reports/
           if-no-files-found: ignore
 
   frontend:
@@ -44,7 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: frontend
+        working-directory: pokemonv2/frontend
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -52,16 +56,15 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: npm
-          cache-dependency-path: frontend/package-lock.json
+          cache-dependency-path: pokemonv2/frontend/package-lock.json
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Lint (informativo; hay errores react-hooks/refs pre-existentes)
+      - name: Lint
         run: npm run lint --if-present
-        continue-on-error: true
 
       - name: Tests
         run: npm test --if-present

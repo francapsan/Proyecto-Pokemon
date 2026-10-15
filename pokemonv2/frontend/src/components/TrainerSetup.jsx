@@ -38,16 +38,6 @@ const TrainerSetup = () => {
         }
     }, [showStartModal]);
 
-    useEffect(() => {
-        // Limpiar los campos cuando cambia de jugador
-        if (currentPlayer === 2) {
-            setName('');
-            setGender('');
-            setMessage('');
-            setIsWaiting(false);
-        }
-    }, [currentPlayer]);
-
     const handleStartGame = () => {
         playClickSound();
         setShowStartModal(false);
@@ -104,6 +94,10 @@ const TrainerSetup = () => {
                 
                 setTimeout(() => {
                     setCurrentPlayer(2);
+                    setName('');
+                    setGender('');
+                    setMessage('');
+                    setIsWaiting(false);
                 }, GAME_CONFIG.PLAYER_SETUP_DELAY);
             } else {
                 setMessage(`¡${welcome}, ${data.name}! Ambos jugadores están listos. La elección de los Pokemon dará comienzo...`);
@@ -118,7 +112,7 @@ const TrainerSetup = () => {
     };
 
     if (isSelectionPhase) {
-        return <PokemonSelection trainers={trainers} backgroundMusic={backgroundMusic.current} isMusicPlaying={isMusicPlaying} setIsMusicPlaying={setIsMusicPlaying} />;
+        return <PokemonSelection trainers={trainers} backgroundMusicRef={backgroundMusic} isMusicPlaying={isMusicPlaying} setIsMusicPlaying={setIsMusicPlaying} />;
     }
 
     return (

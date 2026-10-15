@@ -59,16 +59,13 @@ const AliveIndicatorBox = ({ aliveCount, trainerName }) => {
 };
 
 // --- SUB-COMPONENTE: Texto con efecto de máquina de escribir ---
+// Se usa con key={text}: cada texto nuevo monta un componente nuevo que empieza vacío.
 const TypewriterText = ({ text, speed = 40 }) => {
     const [displayedText, setDisplayedText] = useState('');
 
     useEffect(() => {
-        if (!text) {
-            setDisplayedText('');
-            return;
-        }
+        if (!text) return;
 
-        setDisplayedText('');
         let i = 0;
         const intervalId = setInterval(() => {
             if (i <= text.length) {
@@ -133,7 +130,7 @@ const PROJECTILE_TYPE_TO_CLASS = {
 const THROW_GIF_DURATION_MS = 1400;
 
 // --- COMPONENTE PRINCIPAL: Arena de Combate ---
-const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = null, catalog = null }) => {
+const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusicRef = null, catalog = null }) => {
     // --- EQUIPOS COMPLETOS (mantienen HP residual de cada Pokémon) ---
     const [player1Team, setPlayer1Team] = useState(() => buildTeam(teams[1], catalog));
     const [player2Team, setPlayer2Team] = useState(() => buildTeam(teams[2], catalog));
@@ -187,20 +184,16 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
 
     const playPokemonCry = (pokemon) => playCry(pokemon, AUDIO_CONFIG.VOLUME?.SFX ?? 0.7);
 
-    const getTrainerName = (playerId) => {
+    const getTrainerName = useCallback((playerId) => {
         const idx = playerId === 'player1' ? 0 : 1;
         return trainers[idx]?.name || `Jugador ${idx + 1}`;
-    };
+    }, [trainers]);
 
-    // Mensaje "¿Qué hará X?" cuando empieza un turno
-    useEffect(() => {
-        if (!battleOver && !isTurnInProgress && !isSwitching && introState.started) {
-            setDialogMessage(`¿Qué hará ${getTrainerName(currentTurn)}?`);
-        }
-        // Dependencias intencionalmente acotadas.
-        // No queremos pisar el diálogo durante una animación.
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [currentTurn, battleOver, introState.started]);
+    // Pasa el turno y pregunta al entrenador qué hará.
+    const startTurn = useCallback((playerId) => {
+        setCurrentTurn(playerId);
+        setDialogMessage(`¿Qué hará ${getTrainerName(playerId)}?`);
+    }, [getTrainerName]);
 
     // --- INTRO DE LANZAMIENTO: cada jugador lanza su Pokémon antes de empezar ---
     // (Sólo se ejecuta una vez al montar)
@@ -235,6 +228,7 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
 
             // FASE 3: Intro completada → la batalla normal toma el control
             setIntroState(s => ({ ...s, started: true }));
+            startTurn(currentTurn);
             setIsTurnInProgress(false);
         })();
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -242,6 +236,7 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
 
     // Música de combate
     const toggleBattleMusic = () => {
+        const battleMusic = battleMusicRef?.current;
         if (!battleMusic) return;
         if (isBattleMusicPlaying) {
             battleMusic.pause();
@@ -307,7 +302,7 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
         setDialogMessage(`¡${ownerName} envía a ${nextPokemon.name}!`);
         await delay(1500);
         return false;
-    }, [player1Team, player2Team, player1Index, player2Index, trainers]);
+    }, [player1Team, player2Team, player1Index, player2Index, getTrainerName]);
 
     // --- EJECUCIÓN DE UN ATAQUE ELEGIDO POR EL JUGADOR ACTIVO ---
     const executeAttack = useCallback(async (attack) => {
@@ -361,7 +356,7 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
         if (newHp <= 0) {
             const finished = await handleFaint(defenderId);
             if (!finished) {
-                setCurrentTurn(defenderId);
+                startTurn(defenderId);
             }
         } else {
             setAnimationState({
@@ -371,11 +366,11 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
                 arenaEffect: null,
                 fainting: null,
             });
-            setCurrentTurn(defenderId);
+            startTurn(defenderId);
         }
 
         setIsTurnInProgress(false);
-    }, [isTurnInProgress, battleOver, currentTurn, player1Pokemon, player2Pokemon, player1Index, player2Index, handleFaint]);
+    }, [isTurnInProgress, battleOver, currentTurn, player1Pokemon, player2Pokemon, player1Index, player2Index, handleFaint, startTurn]);
 
     // --- CAMBIO DE POKÉMON (consume el turno) ---
     const handleSwitchClick = () => {
@@ -437,9 +432,9 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
         await delay(1500);
 
         // 4. El cambio consume el turno → pasa al rival
-        setCurrentTurn(isP1 ? 'player2' : 'player1');
+        startTurn(isP1 ? 'player2' : 'player1');
         setIsTurnInProgress(false);
-    }, [isTurnInProgress, battleOver, currentTurn, player1Team, player2Team, player1Index, player2Index, trainers]);
+    }, [isTurnInProgress, battleOver, currentTurn, player1Team, player2Team, player1Index, player2Index, getTrainerName, startTurn]);
 
     // --- CLASES DINÁMICAS ---
     const arenaClasses = `battle-arena ${animationState.arenaEffect ? `arena-${animationState.arenaEffect}` : ''}`;
@@ -566,7 +561,7 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusic = nu
 
                 {/* Caja de Diálogo */}
                 <Panel variant="hud" className="dialog-box">
-                    <TypewriterText text={dialogMessage} />
+                    <TypewriterText key={dialogMessage} text={dialogMessage} />
                 </Panel>
             </div>
 
