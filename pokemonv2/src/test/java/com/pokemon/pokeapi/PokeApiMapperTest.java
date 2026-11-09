@@ -25,7 +25,7 @@ class PokeApiMapperTest {
     private static final Stats BALANCED = new Stats(100, 100, 100, 100, 100, 100);
 
     private static List<String> names(List<Attack> attacks) {
-        return attacks.stream().map(Attack::getName).toList();
+        return attacks.stream().map(attack -> attack.getName()).toList();
     }
 
     @Test

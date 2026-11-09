@@ -111,8 +111,37 @@ const TrainerSetup = () => {
         }
     };
 
+    const handleRestart = () => {
+        setTrainers([]);
+        setCurrentPlayer(1);
+        setName('');
+        setGender('');
+        setMessage('');
+        setIsWaiting(false);
+        setShowStartModal(false);
+        setIsSelectionPhase(false);
+
+        if (backgroundMusic.current) {
+            backgroundMusic.current.currentTime = 0;
+            backgroundMusic.current.play()
+                .then(() => setIsMusicPlaying(true))
+                .catch((e) => {
+                    console.error('Error al reanudar la música de fondo:', e);
+                    setIsMusicPlaying(false);
+                });
+        }
+    };
+
     if (isSelectionPhase) {
-        return <PokemonSelection trainers={trainers} backgroundMusicRef={backgroundMusic} isMusicPlaying={isMusicPlaying} setIsMusicPlaying={setIsMusicPlaying} />;
+        return (
+            <PokemonSelection
+                trainers={trainers}
+                backgroundMusicRef={backgroundMusic}
+                isMusicPlaying={isMusicPlaying}
+                setIsMusicPlaying={setIsMusicPlaying}
+                onRestart={handleRestart}
+            />
+        );
     }
 
     return (

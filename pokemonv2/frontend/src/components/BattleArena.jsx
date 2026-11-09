@@ -7,6 +7,7 @@ import { playCry } from '../utils/media';
 import PageShell from './ui/PageShell';
 import Panel from './ui/Panel';
 import Button from './ui/Button';
+import VictoryScreen from './VictoryScreen';
 
 // --- SUB-COMPONENTE: Barra de Vida ---
 const HealthBar = ({ currentHp, maxHp, name }) => {
@@ -130,7 +131,7 @@ const PROJECTILE_TYPE_TO_CLASS = {
 const THROW_GIF_DURATION_MS = 1400;
 
 // --- COMPONENTE PRINCIPAL: Arena de Combate ---
-const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusicRef = null, catalog = null }) => {
+const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusicRef = null, catalog = null, onRestart = null }) => {
     // --- EQUIPOS COMPLETOS (mantienen HP residual de cada Pokémon) ---
     const [player1Team, setPlayer1Team] = useState(() => buildTeam(teams[1], catalog));
     const [player2Team, setPlayer2Team] = useState(() => buildTeam(teams[2], catalog));
@@ -156,6 +157,7 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusicRef =
     const [isTurnInProgress, setIsTurnInProgress] = useState(true);
     const [isBattleMusicPlaying, setIsBattleMusicPlaying] = useState(true);
     const [battleOver, setBattleOver] = useState(false);
+    const [winnerId, setWinnerId] = useState(null);
     // Cuando es true, el panel muestra la lista de Pokémon disponibles para cambiar
     const [isSwitching, setIsSwitching] = useState(false);
 
@@ -278,8 +280,9 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusicRef =
         // si el jugador ya había hecho cambios previamente)
         const nextIndex = team.findIndex((p, i) => i !== currentIndex && p.hp > 0);
         if (nextIndex === -1) {
-            const winnerName = getTrainerName(isP1 ? 'player2' : 'player1');
-            setDialogMessage(`¡${winnerName} ha ganado la batalla!`);
+            const winner = isP1 ? 'player2' : 'player1';
+            setWinnerId(winner);
+            setDialogMessage(`¡${getTrainerName(winner)} ha ganado la batalla!`);
             setBattleOver(true);
             return true;
         }
@@ -452,6 +455,27 @@ const BattleArena = ({ trainers = [], teams = { 1: [], 2: [] }, battleMusicRef =
 
     const canSwitch = switchableOptions.length > 0;
     const showAttackPanel = !battleOver && !isTurnInProgress;
+
+    if (battleOver && winnerId) {
+        const winnerIndex = winnerId === 'player1' ? 0 : 1;
+        const winnerTeam = winnerId === 'player1' ? player1Team : player2Team;
+        return (
+            <PageShell
+                currentStep="battle"
+                isMusicPlaying={isBattleMusicPlaying}
+                onToggleMusic={toggleBattleMusic}
+                chrome="hidden"
+                musicPosition="top-right"
+            >
+                <VictoryScreen
+                    trainerName={getTrainerName(winnerId)}
+                    gender={trainers[winnerIndex]?.gender}
+                    team={winnerTeam}
+                    onRestart={onRestart}
+                />
+            </PageShell>
+        );
+    }
     // El panel sólo aparece cuando le toca elegir acción al jugador activo:
     // no durante la intro, ni durante animaciones de ataque/cambio/KO,
     // ni una vez terminada la batalla. Se mantiene mientras isSwitching

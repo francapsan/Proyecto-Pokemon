@@ -25,7 +25,7 @@ const normalizePokemon = (p) => ({
     sprite: p.sprite ?? null,
     cry: p.cry ?? null,
 });
-const PokemonSelection = ({ trainers, backgroundMusicRef, isMusicPlaying: sharedIsMusicPlaying, setIsMusicPlaying: setSharedIsMusicPlaying }) => {
+const PokemonSelection = ({ trainers, backgroundMusicRef, isMusicPlaying: sharedIsMusicPlaying, setIsMusicPlaying: setSharedIsMusicPlaying, onRestart = null }) => {
     const [choices, setChoices] = useState({ 1: [], 2: [] });
     const [catalog, setCatalog] = useState({});
     const [isLoading, setIsLoading] = useState(true);
@@ -253,6 +253,14 @@ const PokemonSelection = ({ trainers, backgroundMusicRef, isMusicPlaying: shared
         );
     }
 
+    const handleRestart = () => {
+        if (battleMusic.current) {
+            battleMusic.current.pause();
+            battleMusic.current.currentTime = 0;
+        }
+        onRestart?.();
+    };
+
     if (showBattle) {
         console.log('🎮 BattleArena renderizado con:', { trainers, teams });
         return (
@@ -261,6 +269,7 @@ const PokemonSelection = ({ trainers, backgroundMusicRef, isMusicPlaying: shared
                 teams={teams} 
                 battleMusicRef={battleMusic} 
                 catalog={catalog}
+                onRestart={handleRestart}
             />
         );
     }

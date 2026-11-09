@@ -33,7 +33,7 @@ public record PokemonDTO(
         Stats stats = pokemon.getStats();
         return new PokemonDTO(
                 pokemon.getName(),
-                pokemon.getTypes().stream().map(Enum::name).toList(),
+                pokemon.getTypes().stream().map(type -> type.name()).toList(),
                 stats.hp(),
                 stats.attack(),
                 stats.defense(),
